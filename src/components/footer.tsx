@@ -17,11 +17,11 @@ export const Footer = () => {
                 size="sm"
                 variant="light"
             >
-                <span className="text-default-600">Made with</span>
+                <span className="text-default-600">用</span>
                 <HeartIcon className="fill-red-500" size={20} />
                 <span className="text-default-600">by</span>
                 <AmRoLogo className="fill-primary" size={24} />
-                <span className="text-default-600">for FREE internet</span>
+                <span className="text-default-600">为自由互联网而做</span>
             </Button>
         </footer>
     );

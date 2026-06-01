@@ -120,11 +120,11 @@ export default function AccessKeyForm({ serverId, accessKeyData }: Props) {
                     </div>
                 }
                 disclosure={errorModalDisclosure}
-                title="Error!"
+                title="错误！"
             />
             <div className="grid gap-6">
                 <section className="flex justify-start items-center gap-2">
-                    <Tooltip closeDelay={100} color="default" content="Access keys" delay={600} size="sm">
+                    <Tooltip closeDelay={100} color="default" content="访问密钥" delay={600} size="sm">
                         <Button
                             isIconOnly
                             as={Link}
@@ -136,23 +136,21 @@ export default function AccessKeyForm({ serverId, accessKeyData }: Props) {
                         </Button>
                     </Tooltip>
 
-                    <h1 className="text-xl">
-                        {accessKeyData ? ` Access Key "${accessKeyData.name}"` : "New  Access Key"}
-                    </h1>
+                    <h1 className="text-xl">{accessKeyData ? `访问密钥 "${accessKeyData.name}"` : "新建访问密钥"}</h1>
                 </section>
 
                 <form className="grid gap-4 w-full max-w-[464px]" onSubmit={form.handleSubmit(actualSubmit)}>
                     <Input
                         errorMessage={form.formState.errors.name?.message}
                         isInvalid={!!form.formState.errors.name}
-                        label="Access key name"
+                        label="访问密钥名称"
                         size="sm"
                         variant="underlined"
                         {...form.register("name", {
-                            required: "Name is required",
+                            required: "名称为必填项",
                             maxLength: {
                                 value: 64,
-                                message: "The name cannot be more than 64 character"
+                                message: "名称不能超过 64 个字符"
                             }
                         })}
                     />
@@ -162,7 +160,7 @@ export default function AccessKeyForm({ serverId, accessKeyData }: Props) {
                             endContent={<span>MB</span>}
                             errorMessage={form.formState.errors.dataLimit?.message}
                             isInvalid={!!form.formState.errors.dataLimit}
-                            label="Data limit"
+                            label="流量上限"
                             size="sm"
                             type="number"
                             variant="underlined"
@@ -171,7 +169,7 @@ export default function AccessKeyForm({ serverId, accessKeyData }: Props) {
                                 min: 0,
                                 max: {
                                     value: MAX_DATA_LIMIT_FOR_ACCESS_KEYS,
-                                    message: `The value cannot be more that ${MAX_DATA_LIMIT_FOR_ACCESS_KEYS}`
+                                    message: `数值不能超过 ${MAX_DATA_LIMIT_FOR_ACCESS_KEYS}`
                                 },
                                 setValueAs: (v) => parseInt(v)
                             })}
@@ -193,7 +191,7 @@ export default function AccessKeyForm({ serverId, accessKeyData }: Props) {
                         )}
 
                         <CustomDatePicker
-                            label="Expiration Date:"
+                            label="到期日期："
                             value={selectedExpirationDate}
                             onChange={(value) => setSelectedExpirationDate(value)}
                         />
@@ -208,7 +206,7 @@ export default function AccessKeyForm({ serverId, accessKeyData }: Props) {
                                 type="button"
                                 variant="ghost"
                             >
-                                {selectedPrefix ? `Selected prefix: ${selectedPrefix}` : "Prefix"}
+                                {selectedPrefix ? `已选前缀： ${selectedPrefix}` : "前缀"}
                             </Button>
                         </DropdownTrigger>
                         <DropdownMenu
@@ -228,7 +226,7 @@ export default function AccessKeyForm({ serverId, accessKeyData }: Props) {
                     {selectedPrefix && (
                         <div className="grid gap-2">
                             <Divider className="opacity-65" />
-                            <span>Prefix recommended ports:</span>
+                            <span>前缀推荐端口：</span>
                             <div className="flex flex-wrap gap-2 rounded-xl p-4 bg-content2">
                                 {AccessKeyPrefixes.find(
                                     (x) => x.type.toString() === selectedPrefix
@@ -247,7 +245,7 @@ export default function AccessKeyForm({ serverId, accessKeyData }: Props) {
                         type="submit"
                         variant="shadow"
                     >
-                        Save
+                        保存
                     </Button>
                 </form>
             </div>

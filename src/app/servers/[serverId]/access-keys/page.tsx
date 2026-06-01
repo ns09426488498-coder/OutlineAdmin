@@ -7,7 +7,7 @@ import { getAccessKeysCount } from "@/src/core/actions/access-key";
 import { createPageTitle } from "@/src/core/utils";
 
 export const metadata: Metadata = {
-    title: createPageTitle("Server Access Keys")
+    title: createPageTitle("服务器访问密钥")
 };
 
 interface Props {

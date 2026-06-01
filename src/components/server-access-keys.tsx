@@ -106,22 +106,22 @@ export default function ServerAccessKeys({ server, total }: Props) {
             <MessageModal
                 body={
                     <div className="grid gap-2">
-                        <span>Could not delete the access key. Something went wrong.</span>
+                        <span>无法删除访问密钥，发生错误。</span>
                         <pre className="text-sm break-words whitespace-pre-wrap text-danger-500">{serverError}</pre>
                     </div>
                 }
                 disclosure={apiErrorModalDisclosure}
-                title="Server Error!"
+                title="删除访问密钥"
             />
 
             <ConfirmModal
                 body={
                     <div className="grid gap-2">
-                        <span>Are you sure you want to remove this access key?</span>
+                        <span>确定要移除这个访问密钥吗？</span>
                         <p className="text-default-500 text-sm whitespace-pre-wrap break-all">{formattedAccessKey}</p>
                     </div>
                 }
-                confirmLabel="Remove"
+                confirmLabel="删除"
                 disclosure={removeAccessKeyConfirmModalDisclosure}
                 title="Remove Access Key"
                 onConfirm={handleRemoveAccessKey}
@@ -130,7 +130,7 @@ export default function ServerAccessKeys({ server, total }: Props) {
             <div className="grid gap-6">
                 <section className="flex justify-between items-center gap-2">
                     <section className="flex items-center gap-2">
-                        <Tooltip closeDelay={100} color="default" content="Servers" delay={600} size="sm">
+                        <Tooltip closeDelay={100} color="default" content="服务器" delay={600} size="sm">
                             <Button as={Link} href="/servers" isIconOnly={true} size="sm" variant="light">
                                 <ArrowLeftIcon size={20} />
                             </Button>
@@ -153,7 +153,7 @@ export default function ServerAccessKeys({ server, total }: Props) {
 
                 <section className="grid gap-6">
                     <div className="flex justify-between items-center gap-2">
-                        <h1 className="text-xl">🗝️ Access Keys</h1>
+                        <h1 className="text-xl">🗝️ 访问密钥</h1>
 
                         <Button
                             as={Link}
@@ -183,24 +183,24 @@ export default function ServerAccessKeys({ server, total }: Props) {
                                     </div>
 
                                     <div className="flex gap-1 justify-between items-center">
-                                        <span>Data usage</span>
+                                        <span>已用流量</span>
                                         <AccessKeyDataUsageChip item={item} />
                                     </div>
 
                                     <div className="flex gap-1 justify-between items-center">
-                                        <span>Validity</span>
+                                        <span>有效期</span>
                                         <AccessKeyValidityChip value={item.expiresAt} />
                                     </div>
 
                                     <div className="flex gap-1 justify-between items-center">
-                                        <span>Prefix</span>
+                                        <span>流量上限</span>
                                         <Chip
                                             color={item.prefix ? "success" : "default"}
                                             radius="sm"
                                             size="sm"
                                             variant="flat"
                                         >
-                                            {item.prefix ? item.prefix : "None"}
+                                            {item.prefix ? item.prefix : "?"}
                                         </Chip>
                                     </div>
                                 </CardBody>

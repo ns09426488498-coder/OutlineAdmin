@@ -1,6 +1,6 @@
 services:
   outline-admin:
-    image: amro045/outline-admin:latest
+    build: .
     container_name: outline-admin
     env_file:
       - .env

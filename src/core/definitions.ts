@@ -94,6 +94,10 @@ export type DynamicAccessKeyWithAccessKeys = Prisma.DynamicAccessKeyGetPayload<{
     };
 }>;
 
+export type SortDirection = "asc" | "desc";
+
+export type DynamicAccessKeySortField = "id" | "name" | "remainingData" | "expiresAt";
+
 export type HealthCheckWithServerAndChannel = Prisma.HealthCheckGetPayload<{
     include: {
         server: true;

@@ -10,7 +10,7 @@ interface FormProps {
     password: string;
 }
 
-export default function LoginForm() {
+export default function 登录Form() {
     const form = useForm<FormProps>();
 
     const actualSubmit = async (data: FormProps) => {
@@ -19,7 +19,7 @@ export default function LoginForm() {
         if (userId) {
             await login(userId);
         } else {
-            form.setError("password", { type: "custom", message: "Incorrect password." });
+            form.setError("password", { type: "custom", message: "密码错误。" });
         }
     };
 
@@ -37,8 +37,8 @@ export default function LoginForm() {
                 color="primary"
                 errorMessage={form.formState.errors.password?.message}
                 isInvalid={!!form.formState.errors.password}
-                label="Password"
-                placeholder="Enter your password"
+                label="密码"
+                placeholder="密码错误。"
                 type="password"
                 variant="underlined"
                 {...form.register("password", {
@@ -54,7 +54,7 @@ export default function LoginForm() {
                 type="submit"
                 variant="shadow"
             >
-                Login
+                登录
             </Button>
         </form>
     );

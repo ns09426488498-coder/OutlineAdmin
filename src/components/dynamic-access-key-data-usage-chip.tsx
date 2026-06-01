@@ -22,7 +22,7 @@ export default function DynamicAccessKeyDataUsageChip({ item }: Props) {
 
                 {item.isSelfManaged && (
                     <>
-                        <span className="text-default-500">of</span>
+                        <span className="text-default-500">/ </span>
                         {item.dataLimit ? (
                             <span>{formatBytes(convertDataLimitToUnit(Number(item.dataLimit), DataLimitUnit.MB))}</span>
                         ) : (

@@ -92,26 +92,26 @@ export default function TagsList({ data }: Props) {
                 body={
                     <div className="grid gap-2">
                         <span>
-                            Are you sure you want to delete <q>{tag?.name}</q> tag?
+                            确定要删除标签 <q>{tag?.name}</q> 吗？
                         </span>
                     </div>
                 }
-                confirmLabel="Remove"
+                confirmLabel="删除"
                 disclosure={deleteConfirmModalDisclosure}
-                title="Delete Tag"
+                title="删除标签"
                 onConfirm={handleDelete}
             />
 
             <div className="grid gap-4">
                 <section className="flex justify-start items-center gap-2">
-                    <h1 className="text-xl">Tags</h1>
+                    <h1 className="text-xl">标签</h1>
                 </section>
 
                 <div className="flex justify-between items-center gap-2">
                     <form onSubmit={searchForm.handleSubmit(handleSearch)}>
                         <Input
                             className="w-fit"
-                            placeholder="Name [+Enter]"
+                            placeholder="名称 [+回车]"
                             startContent={<>🔍</>}
                             variant="faded"
                             {...searchForm.register("term")}
@@ -130,7 +130,7 @@ export default function TagsList({ data }: Props) {
                 </div>
 
                 <Table
-                    aria-label="Tags list"
+                    aria-label="标签列表"
                     bottomContent={
                         totalPage > 1 && (
                             <div className="flex justify-center">
@@ -157,7 +157,7 @@ export default function TagsList({ data }: Props) {
 
                                 <TableCell>
                                     <div className="flex gap-2 justify-center items-center">
-                                        <Tooltip closeDelay={100} color="primary" content="Edit" delay={600} size="sm">
+                                        <Tooltip closeDelay={100} color="primary" content="编辑" delay={600} size="sm">
                                             <Button
                                                 as={Link}
                                                 color="primary"
@@ -170,7 +170,7 @@ export default function TagsList({ data }: Props) {
                                             </Button>
                                         </Tooltip>
 
-                                        <Tooltip closeDelay={100} color="danger" content="Delete" delay={600} size="sm">
+                                        <Tooltip closeDelay={100} color="danger" content="编辑" delay={600} size="sm">
                                             <Button
                                                 color="danger"
                                                 isIconOnly={true}

@@ -186,18 +186,18 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
                     </div>
                 }
                 disclosure={errorModalDisclosure}
-                title="Error!"
+                title="错误！"
             />
             <div className="grid gap-6 p-2">
                 <section className="flex justify-start items-center gap-2">
-                    <Tooltip closeDelay={100} color="default" content="Dynamic access keys" delay={600} size="sm">
+                    <Tooltip closeDelay={100} color="default" content="动态访问密钥" delay={600} size="sm">
                         <Button isIconOnly as={Link} href="/dynamic-access-keys" size="sm" variant="light">
                             <ArrowLeftIcon size={20} />
                         </Button>
                     </Tooltip>
 
                     <h1 className="text-xl">
-                        {dynamicAccessKey ? `Dynamic Access Key "${dynamicAccessKey.name}"` : "New Dynamic Access Key"}
+                        {dynamicAccessKey ? `动态访问密钥 "${dynamicAccessKey.name}"` : "新建动态访问密钥"}
                     </h1>
                 </section>
 
@@ -205,23 +205,23 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
                     <Input
                         errorMessage={form.formState.errors.name?.message}
                         isInvalid={!!form.formState.errors.name}
-                        label="Dynamic access key name"
+                        label="动态访问密钥名称"
                         size="sm"
                         variant="underlined"
                         {...form.register("name", {
-                            required: "Name is required",
+                            required: "名称为必填项",
                             maxLength: {
                                 value: 64,
-                                message: "The name cannot be more than 64 character"
+                                message: "名称不能超过 64 个字符"
                             }
                         })}
                     />
 
                     <Input
-                        description="The path will be automatically generated if you leave this field empty"
+                        description="留空时会自动生成路径"
                         errorMessage={form.formState.errors.path?.message}
                         isInvalid={!!form.formState.errors.path}
-                        label="Custom path (optional)"
+                        label="自定义路径（可选）"
                         placeholder="e.g. /dummy-dum-dummo"
                         size="sm"
                         variant="underlined"
@@ -229,7 +229,7 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
                             required: false,
                             maxLength: {
                                 value: 120,
-                                message: "The name cannot be more than 120 character"
+                                message: "路径不能超过 120 个字符"
                             }
                         })}
                     />
@@ -240,18 +240,18 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
                                 color="primary"
                                 errorMessage={form.formState.errors.validityPeriod?.message}
                                 isInvalid={!!form.formState.errors.validityPeriod}
-                                label="Validity period (in days)"
+                                label="有效期（天）"
                                 placeholder="e.g. 30"
                                 type="number"
                                 variant="underlined"
                                 {...form.register("validityPeriod", {
                                     max: {
                                         value: 10000,
-                                        message: "The value must be less than 1000"
+                                        message: "数值必须小于 1000"
                                     },
                                     min: {
                                         value: 1,
-                                        message: "The value must be greater than 1"
+                                        message: "数值必须大于 1"
                                     }
                                 })}
                             />
@@ -259,13 +259,13 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
                             {!dynamicAccessKey && (
                                 <RadioGroup
                                     defaultValue="now"
-                                    label="Usage start date"
+                                    label="用量开始时间"
                                     onValueChange={(v) => {
                                         form.setValue("setUsageDateOnFirstConnection", v === "first-connection");
                                     }}
                                 >
-                                    <Radio value="now">Set on creation</Radio>
-                                    <Radio value="first-connection">Set on first connection</Radio>
+                                    <Radio value="now">创建时开始</Radio>
+                                    <Radio value="first-connection">首次连接时开始</Radio>
                                 </RadioGroup>
                             )}
                         </>
@@ -285,7 +285,7 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
                             </Button>
 
                             <CustomDatePicker
-                                label="Expiration Date:"
+                                label="到期日期："
                                 value={selectedExpirationDate}
                                 onChange={(value) => setSelectedExpirationDate(value)}
                             />
@@ -301,9 +301,7 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
                                 type="button"
                                 variant="ghost"
                             >
-                                {selectedLoadBalancer
-                                    ? `Selected algo: ${selectedLoadBalancer}`
-                                    : "Load balancer algorithm"}
+                                {selectedLoadBalancer ? `已选算法： ${selectedLoadBalancer}` : "负载均衡算法"}
                             </Button>
                         </DropdownTrigger>
                         <DropdownMenu
@@ -333,7 +331,7 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
                                 type="button"
                                 variant="ghost"
                             >
-                                {selectedPrefix ? `Selected prefix: ${selectedPrefix}` : "Prefix"}
+                                {selectedPrefix ? `已选前缀： ${selectedPrefix}` : "前缀"}
                             </Button>
                         </DropdownTrigger>
                         <DropdownMenu
@@ -353,7 +351,7 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
                     {selectedPrefix && (
                         <div className="grid gap-2">
                             <Divider className="opacity-65" />
-                            <span>Prefix recommended ports:</span>
+                            <span>前缀推荐端口：</span>
                             <div className="flex flex-wrap gap-2 rounded-xl p-4 bg-content2">
                                 {AccessKeyPrefixes.find(
                                     (x) => x.type.toString() === selectedPrefix
@@ -368,22 +366,21 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
 
                     <RadioGroup
                         defaultValue={isSelfManaged ? "self-managed" : "manual"}
-                        label="Management Type"
+                        label="管理方式"
                         onValueChange={(v) => form.setValue("isSelfManaged", v === "self-managed")}
                     >
-                        <Radio value="manual">Manual</Radio>
-                        <Radio value="self-managed">Self-Managed</Radio>
+                        <Radio value="manual">手动</Radio>
+                        <Radio value="self-managed">自主管理</Radio>
                     </RadioGroup>
 
                     <ul className="p-4 grid gap-2 rounded-xl bg-content2 text-foreground-500">
                         <li>
-                            <strong className="text-warning">Manual:</strong> You’ll need to assign and remove access
-                            keys yourself. This option gives you full control, but requires more effort.
+                            <strong className="text-warning">手动：</strong>
+                            需要你自行分配和移除访问密钥，可完全控制，但维护量更大。
                         </li>
                         <li>
-                            <strong className="text-warning">Self-Managed:</strong> You’ll set up a server pool, and the
-                            system will automatically handle access key management for you. This option is easier to
-                            maintain once configured.
+                            <strong className="text-warning">自主管理：</strong>
+                            你只需配置服务器池，系统会自动管理访问密钥，配置后更易维护。
                         </li>
                     </ul>
 
@@ -395,7 +392,7 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
                                 endContent={<span>MB</span>}
                                 errorMessage={form.formState.errors.dataLimit?.message}
                                 isInvalid={!!form.formState.errors.dataLimit}
-                                label="Data limit"
+                                label="流量上限"
                                 size="sm"
                                 type="number"
                                 variant="underlined"
@@ -404,7 +401,7 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
                                     min: 1,
                                     max: {
                                         value: MAX_DATA_LIMIT_FOR_ACCESS_KEYS,
-                                        message: `The value cannot be more that ${MAX_DATA_LIMIT_FOR_ACCESS_KEYS}`
+                                        message: `数值不能超过 ${MAX_DATA_LIMIT_FOR_ACCESS_KEYS}`
                                     },
                                     setValueAs: (v) => parseInt(v)
                                 })}
@@ -412,25 +409,24 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
 
                             <RadioGroup
                                 defaultValue={serverPoolType}
-                                label="Server Pool Type"
+                                label="服务器池类型"
                                 onValueChange={(v) => {
                                     form.setValue("serverPoolType", v);
                                     form.setValue("serverPoolValue", null);
                                 }}
                             >
-                                <Radio value="manual">Manual</Radio>
-                                <Radio value="tag">Tag (Recommended)</Radio>
+                                <Radio value="manual">手动</Radio>
+                                <Radio value="tag">标签（推荐）</Radio>
                             </RadioGroup>
 
                             <ul className="p-4 grid gap-2 rounded-xl bg-content2 text-foreground-500">
                                 <li>
-                                    <strong className="text-warning">Manual:</strong> You’ll manually select which
-                                    servers belong to this pool. This gives you full control over the pool’s
-                                    composition.
+                                    <strong className="text-warning">手动：</strong>
+                                    手动选择加入此池的服务器，可完全控制服务器池组成。
                                 </li>
                                 <li>
-                                    <strong className="text-warning">Tag (Recommended):</strong> The system will
-                                    automatically include servers that match the specified tags.
+                                    <strong className="text-warning">标签（推荐）：</strong>
+                                    系统会自动加入匹配指定标签的服务器。
                                 </li>
                             </ul>
 
@@ -440,7 +436,7 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
 
                                     <CheckboxGroup
                                         defaultValue={serverPoolValue}
-                                        label="Select Servers"
+                                        label="选择服务器"
                                         onValueChange={(values) => {
                                             const ids = values.map((x) => parseInt(x));
 
@@ -473,7 +469,7 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
                                                             size="sm"
                                                             variant="flat"
                                                         >
-                                                            {server.isAvailable ? "Available" : "Not Available"}
+                                                            {server.isAvailable ? "可用" : "不可用"}
                                                         </Chip>
                                                     </div>
                                                 </div>
@@ -489,7 +485,7 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
 
                                     <CheckboxGroup
                                         defaultValue={serverPoolValue}
-                                        label="Select Tags"
+                                        label="选择标签"
                                         onValueChange={(values) => {
                                             const ids = values.map((x) => parseInt(x));
 
@@ -513,7 +509,7 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
                         type="submit"
                         variant="shadow"
                     >
-                        Save
+                        保存
                     </Button>
                 </form>
             </div>

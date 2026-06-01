@@ -9,7 +9,7 @@ interface Props {
 
 export default function HealthCheckListItem({ item }: Props) {
     const renderChannelName = () => {
-        if (!item.notificationChannel || item.notificationChannel.type === "None") {
+        if (!item.notificationChannel || item.notificationChannel.type === "?") {
             return "No Notification";
         }
 
@@ -28,14 +28,14 @@ export default function HealthCheckListItem({ item }: Props) {
             <CardBody>
                 <div className="grid gap-2 text-sm">
                     <div className="flex justify-between items-center gap-2">
-                        <span>Status:</span>
+                        <span>状态：</span>
                         {item.isAvailable ? (
                             <Chip color="success" radius="sm" size="sm" variant="flat">
-                                Available
+                                可用
                             </Chip>
                         ) : (
                             <Chip color="danger" radius="sm" size="sm" variant="flat">
-                                Not Available
+                                不可用
                             </Chip>
                         )}
                     </div>
@@ -43,12 +43,12 @@ export default function HealthCheckListItem({ item }: Props) {
                     <div className="flex justify-between items-center gap-2">
                         <span>Last check:</span>
                         <Chip radius="sm" size="sm" variant="flat">
-                            {item.lastCheckedAt?.toLocaleString() ?? "Not Checked Yet"}
+                            {item.lastCheckedAt?.toLocaleString() ?? "尚未检查"}
                         </Chip>
                     </div>
 
                     <div className="flex justify-between items-center gap-2">
-                        <span>Interval:</span>
+                        <span>检查间隔：</span>
                         <Chip radius="sm" size="sm" variant="flat">
                             Every {item.interval}m
                         </Chip>

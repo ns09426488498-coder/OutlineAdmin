@@ -6,7 +6,7 @@ import { getServers } from "@/src/core/actions/server";
 import { getTags } from "@/src/core/actions/tags";
 
 export const metadata: Metadata = {
-    title: createPageTitle("New Dynamic Access Key")
+    title: createPageTitle("新建动态访问密钥")
 };
 
 export default async function DynamicAccessKeyCreatePage() {

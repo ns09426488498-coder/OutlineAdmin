@@ -7,7 +7,7 @@ import { ADMIN_PASSWORD_ROUTE } from "@/src/core/config";
 import { createPageTitle } from "@/src/core/utils";
 
 export const metadata: Metadata = {
-    title: createPageTitle("Login")
+    title: createPageTitle("服务器")
 };
 
 export default async function LoginPage() {

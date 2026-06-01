@@ -32,7 +32,7 @@ const main = async () => {
 
         const pattern = `self-managed-dak-access-key-${dak.id}`;
         const accessKeys = await prisma.accessKey.findMany({
-            where: { name: { contains: pattern } }
+            where: { name: pattern }
         });
 
         logger.info("Access keys found", {

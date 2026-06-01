@@ -5,7 +5,7 @@ import NotificationChannelsList from "@/src/components/notification-channels-lis
 import { getNotificationChannels } from "@/src/core/actions/notification-channel";
 
 export const metadata: Metadata = {
-    title: createPageTitle("Notification Channels")
+    title: createPageTitle("通知渠道")
 };
 
 export default async function NotificationChannelsPage() {

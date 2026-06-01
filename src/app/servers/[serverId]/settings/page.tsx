@@ -14,7 +14,7 @@ interface Props {
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-    title: createPageTitle("Server Settings")
+    title: createPageTitle("服务器设置")
 };
 
 export default async function ServerSettingsPage({ params }: Props) {

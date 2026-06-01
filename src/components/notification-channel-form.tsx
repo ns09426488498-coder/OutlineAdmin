@@ -62,15 +62,15 @@ export default function NotificationChannelForm({ channel }: Props) {
 
     const errorModalDisclosure = useDisclosure();
     const [errorMessage, setErrorMessage] = useState<string>();
-    const [isTesting, setIsTesting] = useState<boolean>(false);
+    const [is测试ing, setIs测试ing] = useState<boolean>(false);
 
     const selectedType = watch("type");
 
-    const handleTest = async () => {
+    const handle测试 = async () => {
         const values = getValues();
 
         try {
-            setIsTesting(true);
+            setIs测试ing(true);
             const result = await testTelegramNotificationChannel({
                 apiUrl: values.telegramApiUrl!,
                 botToken: values.telegramBotToken!,
@@ -92,12 +92,12 @@ export default function NotificationChannelForm({ channel }: Props) {
             setErrorMessage((error as object).toString());
             errorModalDisclosure.onOpen();
         } finally {
-            setIsTesting(false);
+            setIs测试ing(false);
         }
     };
 
     const actualSubmit = async (data: FormFields) => {
-        const type = data.type ?? "None";
+        const type = data.type ?? "?";
         let config = null;
 
         if (data.type === "Telegram") {
@@ -149,17 +149,17 @@ export default function NotificationChannelForm({ channel }: Props) {
                     </div>
                 }
                 disclosure={errorModalDisclosure}
-                title="Error!"
+                title="错误！"
             />
             <div className="grid gap-6 w-full">
                 <section className="flex justify-start items-center gap-2">
-                    <Tooltip closeDelay={100} color="default" content="Notification channels" delay={600} size="sm">
+                    <Tooltip closeDelay={100} color="default" content="通知渠道" delay={600} size="sm">
                         <Button isIconOnly as={Link} href="/notification-channels" size="sm" variant="light">
                             <ArrowLeftIcon size={20} />
                         </Button>
                     </Tooltip>
 
-                    <h1 className="text-xl">{channel ? "Edit Notification Channel" : "New Notification Channel"}</h1>
+                    <h1 className="text-xl">{channel ? "编辑通知渠道" : "新建通知渠道"}</h1>
                 </section>
 
                 <form className="w-full max-w-[464px] grid gap-4" onSubmit={handleSubmit(actualSubmit)}>
@@ -167,11 +167,11 @@ export default function NotificationChannelForm({ channel }: Props) {
                         color="primary"
                         errorMessage={formState.errors.name?.message}
                         isInvalid={!!formState.errors.name}
-                        label="Channel name"
+                        label="渠道名称"
                         placeholder="e.g. My Telegram"
                         variant="underlined"
                         {...register("name", {
-                            required: "The name is required"
+                            required: "名称为必填项"
                         })}
                     />
 
@@ -180,8 +180,8 @@ export default function NotificationChannelForm({ channel }: Props) {
                         name="type"
                         render={({ field }) => (
                             <RadioGroup
-                                defaultValue={channel?.type ?? "None"}
-                                label="Notification type"
+                                defaultValue={channel?.type ?? "?"}
+                                label="通知类型"
                                 value={field.value}
                                 onChange={field.onChange}
                             >
@@ -201,27 +201,26 @@ export default function NotificationChannelForm({ channel }: Props) {
                                 <span>Configuration</span>
                                 <Button
                                     isDisabled={formState.isSubmitting || formState.isSubmitSuccessful}
-                                    isLoading={isTesting}
+                                    isLoading={is测试ing}
                                     size="sm"
                                     variant="light"
-                                    onPress={handleTest}
+                                    onPress={handle测试}
                                 >
-                                    Test
+                                    测试
                                 </Button>
                             </div>
 
                             <div>
                                 {selectedType === "Telegram" && (
                                     <Alert color="warning" variant="flat">
-                                        If Telegram is blocked in the region where your server is hosted, you may
-                                        experience issues sending notifications through the Telegram API. To resolve
-                                        this, consider using a proxy such as{" "}
+                                        如果服务器所在地区无法访问 Telegram，通过 Telegram API
+                                        发送通知可能会失败。可考虑使用代理，例如：
                                         <Link
                                             className="text-warning font-black contents"
                                             href={app.links.myTelegramApiProxyWorkerRepo}
                                             target="_blank"
                                         >
-                                            Telegram API Proxy via Cloudflare Worker
+                                            基于 Cloudflare Worker 的 Telegram API 代理
                                         </Link>
                                         .
                                     </Alert>
@@ -235,7 +234,7 @@ export default function NotificationChannelForm({ channel }: Props) {
                                     placeholder="e.g. https://api.telegram.org"
                                     variant="underlined"
                                     {...register("telegramApiUrl", {
-                                        required: "API URL is required",
+                                        required: "API URL 为必填项",
                                         setValueAs: (v) => v?.replace(/\/+$/, "")
                                     })}
                                 />
@@ -249,7 +248,7 @@ export default function NotificationChannelForm({ channel }: Props) {
                                 placeholder="e.g. 7049328752:AAE20ro04o0XApJ0yuesd12t5e8w41s55ck"
                                 variant="underlined"
                                 {...register("telegramBotToken", {
-                                    required: "Bot token is required"
+                                    required: "Bot token 为必填项"
                                 })}
                             />
                             <Input
@@ -259,15 +258,15 @@ export default function NotificationChannelForm({ channel }: Props) {
                                 label="Chat ID"
                                 placeholder="e.g. 1234401001"
                                 variant="underlined"
-                                {...register("telegramChatId", { required: "Chat ID is required" })}
+                                {...register("telegramChatId", { required: "Chat ID 为必填项" })}
                             />
 
                             <Textarea
                                 color="primary"
-                                description="Available placeholders: {{serverName}} {{serverHostnameOrIp}} {{errorMessage}}"
+                                description="可用占位符：{{serverName}} {{serverHostnameOrIp}} {{errorMessage}}"
                                 errorMessage={formState.errors.telegramMessageTemplate?.message}
                                 isInvalid={!!formState.errors.telegramMessageTemplate}
-                                label="Message template (Markdown)"
+                                label="消息模板（Markdown）"
                                 placeholder={`e.g. ${app.defaultTelegramNotificationTemplate}`}
                                 variant="underlined"
                                 {...register("telegramMessageTemplate")}
@@ -277,7 +276,7 @@ export default function NotificationChannelForm({ channel }: Props) {
 
                     <Button
                         color="primary"
-                        isDisabled={isTesting}
+                        isDisabled={is测试ing}
                         isLoading={formState.isSubmitting || formState.isSubmitSuccessful}
                         type="submit"
                         variant="shadow"

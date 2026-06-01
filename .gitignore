@@ -43,3 +43,4 @@ prisma/*.db
 prisma/sqlite/*.db*
 dist
 logs
+.codex-logs/

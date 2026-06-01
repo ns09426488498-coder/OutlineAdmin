@@ -11,7 +11,7 @@ import { updateHealthCheck } from "@/src/core/actions/health-check";
 import MessageModal from "@/src/components/modals/message-modal";
 import { ArrowLeftIcon } from "@/src/components/icons";
 
-const NoNotificationChannel = { id: 0, name: "None", type: "None" };
+const NoNotificationChannel = { id: 0, name: "?", type: "?" };
 
 interface Props {
     healthCheck: HealthCheck;
@@ -69,7 +69,7 @@ export default function HealthCheckEditForm({ healthCheck, notificationChannels 
                     </div>
                 }
                 disclosure={errorModalDisclosure}
-                title="Error!"
+                title="错误！"
             />
             <div className="grid gap-6">
                 <section className="flex justify-start items-center gap-2">
@@ -79,7 +79,7 @@ export default function HealthCheckEditForm({ healthCheck, notificationChannels 
                         </Button>
                     </Tooltip>
 
-                    <h1 className="text-xl">Health Check Details</h1>
+                    <h1 className="text-xl">健康检查详情</h1>
                 </section>
 
                 <form className="w-full max-w-[464px] grid gap-4" onSubmit={handleSubmit(actualSubmit)}>
@@ -88,13 +88,13 @@ export default function HealthCheckEditForm({ healthCheck, notificationChannels 
                         description="Time (in minutes) between each server status check"
                         errorMessage={formState.errors.interval?.message}
                         isInvalid={!!formState.errors.interval}
-                        label="Interval"
+                        label="检查间隔"
                         max={10000}
                         min={1}
                         placeholder="e.g. 5"
                         type="number"
                         variant="underlined"
-                        {...register("interval", { valueAsNumber: true, required: "Interval is required" })}
+                        {...register("interval", { valueAsNumber: true, required: "检查间隔为必填项" })}
                     />
 
                     <Input
@@ -102,7 +102,7 @@ export default function HealthCheckEditForm({ healthCheck, notificationChannels 
                         description="Time (in minutes) to wait before sending another notification"
                         errorMessage={formState.errors.notificationCooldown?.message}
                         isInvalid={!!formState.errors.notificationCooldown}
-                        label="Notification cooldown"
+                        label="通知冷却时间"
                         max={10000}
                         min={1}
                         placeholder="e.g. 5"
@@ -110,7 +110,7 @@ export default function HealthCheckEditForm({ healthCheck, notificationChannels 
                         variant="underlined"
                         {...register("notificationCooldown", {
                             valueAsNumber: true,
-                            required: "Notification cooldown is required"
+                            required: "通知冷却时间为必填项"
                         })}
                     />
 
@@ -120,14 +120,13 @@ export default function HealthCheckEditForm({ healthCheck, notificationChannels 
                             name="notificationChannelId"
                             render={({ field }) => (
                                 <RadioGroup
-                                    label="Notification channel"
+                                    label="通知渠道"
                                     value={field.value?.toString() ?? "0"}
                                     onChange={field.onChange}
                                 >
                                     {[NoNotificationChannel, ...notificationChannels].map((channel) => (
                                         <Radio key={channel.id} value={channel.id.toString()}>
-                                            {channel.name} ({channel.type === "None" ? "No Notification" : channel.type}
-                                            )
+                                            {channel.name} ({channel.type === "?" ? "不通知" : channel.type})
                                         </Radio>
                                     ))}
                                 </RadioGroup>

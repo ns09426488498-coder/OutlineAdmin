@@ -27,7 +27,7 @@ export default function AdminPasswordForm() {
         >
             <div className="grid gap-4 place-items-center text-default-400">
                 <UserPasswordIcon size={124} />
-                <p className="text-xl mb-6">You need to set a password for admin user</p>
+                <p className="text-xl mb-6">需要先为管理员设置密码</p>
             </div>
 
             <Input
@@ -35,8 +35,8 @@ export default function AdminPasswordForm() {
                 color="primary"
                 errorMessage={form.formState.errors.password?.message}
                 isInvalid={!!form.formState.errors.password}
-                label="Password"
-                placeholder="Admin user password"
+                label="密码"
+                placeholder="管理员密码"
                 type="password"
                 variant="underlined"
                 {...form.register("password", {
@@ -52,7 +52,7 @@ export default function AdminPasswordForm() {
                 type="submit"
                 variant="shadow"
             >
-                Save
+                保存
             </Button>
         </form>
     );

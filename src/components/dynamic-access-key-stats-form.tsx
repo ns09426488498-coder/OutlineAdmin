@@ -57,7 +57,7 @@ export default function DynamicAccessKeyStatsForm() {
         }
     };
 
-    const handleReset = () => {
+    const handle重置 = () => {
         form.reset();
         setStats(undefined);
     };
@@ -67,12 +67,12 @@ export default function DynamicAccessKeyStatsForm() {
             <MessageModal
                 body={
                     <div className="grid gap-2">
-                        <span>Something went wrong.</span>
+                        <span>发生错误。</span>
                         <pre className="text-sm break-words whitespace-pre-wrap text-danger-500">{error}</pre>
                     </div>
                 }
                 disclosure={errorModalDisclosure}
-                title="Error!"
+                title="错误！"
             />
 
             <form
@@ -81,7 +81,7 @@ export default function DynamicAccessKeyStatsForm() {
             >
                 <div className="mb-8 text-foreground grid gap-2 place-items-center px-4">
                     <StatsIcon size={86} />
-                    <div className="text-center">Enter your access key to view your usage statistics</div>
+                    <div className="text-center">输入访问密钥查看用量统计</div>
                 </div>
 
                 <Input
@@ -89,7 +89,7 @@ export default function DynamicAccessKeyStatsForm() {
                     color="primary"
                     errorMessage={form.formState.errors.accessKey?.message}
                     isInvalid={!!form.formState.errors.accessKey}
-                    label="Access Key"
+                    label="访问密钥"
                     variant="underlined"
                     {...form.register("accessKey", {
                         required: true,
@@ -102,8 +102,8 @@ export default function DynamicAccessKeyStatsForm() {
                         Check
                     </Button>
                     {stats !== undefined && (
-                        <Button variant="shadow" onPress={handleReset}>
-                            Reset
+                        <Button variant="shadow" onPress={handle重置}>
+                            重置
                         </Button>
                     )}
                 </ButtonGroup>
@@ -120,12 +120,12 @@ export default function DynamicAccessKeyStatsForm() {
                         </CardHeader>
                         <CardBody className="text-sm grid gap-2">
                             <div className="flex gap-1 justify-between items-center">
-                                <span>Data usage</span>
+                                <span>已用流量</span>
                                 <DynamicAccessKeyDataUsageChip item={stats} />
                             </div>
 
                             <div className="flex gap-1 justify-between items-center">
-                                <span>Validity</span>
+                                <span>有效期</span>
                                 <DynamicAccessKeyValidityChip dak={stats} />
                             </div>
                         </CardBody>

@@ -8,7 +8,7 @@ import { getServers } from "@/src/core/actions/server";
 import { getTags } from "@/src/core/actions/tags";
 
 export const metadata: Metadata = {
-    title: createPageTitle("Edit Dynamic Access Key")
+    title: createPageTitle("编辑动态访问密钥")
 };
 
 interface Props {

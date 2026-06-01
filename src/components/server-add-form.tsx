@@ -11,7 +11,7 @@ import { createServer } from "@/src/core/actions/server";
 import { app } from "@/src/core/config";
 import MessageModal from "@/src/components/modals/message-modal";
 
-export default function ServerAddForm() {
+export default function Server添加Form() {
     const router = useRouter();
     const updateErrorModalDisclosure = useDisclosure();
     const form = useForm<NewServerRequest>();
@@ -34,32 +34,30 @@ export default function ServerAddForm() {
             <MessageModal
                 body={
                     <div className="grid gap-2">
-                        <span>Could not add server. Something went wrong.</span>
+                        <span>无法添加服务器，发生错误。</span>
                         <pre className="text-sm break-words whitespace-pre-wrap text-danger-500">{serverError}</pre>
                     </div>
                 }
                 disclosure={updateErrorModalDisclosure}
-                title="Server Error!"
+                title="新建服务器"
             />
 
             <div className="grid gap-6">
                 <section className="flex justify-start items-center gap-2">
-                    <Tooltip closeDelay={100} color="default" content="Servers" delay={600} size="sm">
+                    <Tooltip closeDelay={100} color="default" content="服务器" delay={600} size="sm">
                         <Button as={Link} href="/servers" isIconOnly={true} size="sm" variant="light">
                             <ArrowLeftIcon size={20} />
                         </Button>
                     </Tooltip>
 
-                    <h1 className="text-xl">Add Outline Server</h1>
+                    <h1 className="text-xl">添加 Outline 服务器</h1>
                 </section>
 
                 <section className="p-2 grid gap-2">
                     <Tabs>
-                        <Tab title="New Server">
+                        <Tab title="表单添加">
                             <div className="grid gap-2">
-                                <p className="text-sm text-default-500 ">
-                                    Log into your VPN server and run this command
-                                </p>
+                                <p className="text-sm text-default-500 ">登录 VPN 服务器并运行此命令</p>
                                 <Snippet
                                     classNames={{
                                         pre: "!break-words whitespace-pre-wrap max-w-[70vw]"
@@ -72,11 +70,9 @@ export default function ServerAddForm() {
                             </div>
                         </Tab>
 
-                        <Tab title="Existing Server">
+                        <Tab title="已有服务器">
                             <div className="grid gap-2">
-                                <p className="text-sm text-default-500">
-                                    Log into your VPN server and run this command
-                                </p>
+                                <p className="text-sm text-default-500">登录 VPN 服务器并运行此命令</p>
                                 <Snippet
                                     classNames={{
                                         pre: "!break-words whitespace-pre-wrap max-w-[70vw]"
@@ -95,7 +91,7 @@ export default function ServerAddForm() {
                     <form className="grid gap-4" onSubmit={form.handleSubmit(actualSubmit)}>
                         <Input
                             color="primary"
-                            label="Paste your installation output here"
+                            label="在此粘贴安装输出"
                             placeholder={app.snippets.exampleServerManagementJson}
                             required={true}
                             variant="underlined"
@@ -115,7 +111,7 @@ export default function ServerAddForm() {
                                 type="submit"
                                 variant="shadow"
                             >
-                                Add
+                                添加
                             </Button>
                         </div>
                     </form>

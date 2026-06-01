@@ -5,7 +5,7 @@ import { getServersWithTags } from "@/src/core/actions/server";
 import { createPageTitle } from "@/src/core/utils";
 
 export const metadata: Metadata = {
-    title: createPageTitle("Servers")
+    title: createPageTitle("服务器")
 };
 
 export default async function ServersPage() {

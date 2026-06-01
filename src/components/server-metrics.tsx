@@ -49,7 +49,7 @@ export default function ServerMetrics({ server }: Props) {
         <>
             <div className="grid gap-6">
                 <section className="flex justify-start items-center gap-2">
-                    <Tooltip closeDelay={100} color="default" content="Back" delay={600} size="sm">
+                    <Tooltip closeDelay={100} color="default" content="返回" delay={600} size="sm">
                         <Button
                             as={Link}
                             href={returnUrl ? returnUrl : "/servers"}

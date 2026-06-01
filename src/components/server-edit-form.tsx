@@ -52,7 +52,7 @@ export default function ServerEditForm({ server, tags }: Props) {
         }
     };
 
-    const handleRemoveServer = async () => {
+    const handle移除Server = async () => {
         await removeServer(server.id);
 
         router.push("/servers");
@@ -63,33 +63,32 @@ export default function ServerEditForm({ server, tags }: Props) {
             <MessageModal
                 body={
                     <div className="grid gap-2">
-                        <span>Could not update server. Something went wrong.</span>
+                        <span>无法更新服务器，发生错误。</span>
                         <pre className="text-sm break-words whitespace-pre-wrap text-danger-500">{serverError}</pre>
                     </div>
                 }
                 disclosure={updateErrorModalDisclosure}
-                title="Server Error!"
+                title="编辑服务器"
             />
 
             <ConfirmModal
                 body={
                     <div className="grid gap-2">
-                        <span>Are you sure you want to remove this server?</span>
+                        <span>确定要移除这台服务器吗？</span>
                         <p className="text-default-500 text-sm">
-                            Please note that this action will only remove the server from the {app.name}
-                            &apos;s database. The server itself will not be affected.
+                            请注意，此操作只会从 {app.name} 的数据库中移除服务器，不会影响服务器本身。
                         </p>
                     </div>
                 }
-                confirmLabel="Remove"
+                confirmLabel="移除"
                 disclosure={removeServerConfirmModalDisclosure}
-                title="Remove Server"
-                onConfirm={handleRemoveServer}
+                title="移除服务器"
+                onConfirm={handle移除Server}
             />
 
             <div className="grid gap-6">
                 <section className="flex justify-start items-center gap-2">
-                    <Tooltip closeDelay={100} color="default" content="Back" delay={600} size="sm">
+                    <Tooltip closeDelay={100} color="default" content="返回" delay={600} size="sm">
                         <Button
                             as={Link}
                             href={returnUrl ? returnUrl : "/servers"}
@@ -101,16 +100,16 @@ export default function ServerEditForm({ server, tags }: Props) {
                         </Button>
                     </Tooltip>
 
-                    <h1 className="text-xl">Server Settings</h1>
+                    <h1 className="text-xl">服务器设置</h1>
                 </section>
 
                 <form className="p-2 grid gap-4" onSubmit={form.handleSubmit(actualSubmit)}>
-                    <span className="text-lg">Editable Information</span>
+                    <span className="text-lg">可编辑信息</span>
                     <Input
                         className="w-[320px]"
-                        description="Set a new name for your server. Note that this will not be reflected on the devices of the users that you invited to connect to it"
+                        description="为服务器设置新名称。此更改不会同步到已邀请连接的用户设备"
                         isInvalid={!!form.formState.errors.name}
-                        label="Server name"
+                        label="服务器名称"
                         required={true}
                         size="sm"
                         variant="underlined"
@@ -122,9 +121,9 @@ export default function ServerEditForm({ server, tags }: Props) {
 
                     <Input
                         className="w-[320px]"
-                        description="This will not affect the existing access keys"
+                        description="不会影响已有访问密钥"
                         isInvalid={!!form.formState.errors.hostnameForNewAccessKeys}
-                        label="Hostname or IP for new access keys"
+                        label="新访问密钥主机名或 IP"
                         required={true}
                         size="sm"
                         variant="underlined"
@@ -136,9 +135,9 @@ export default function ServerEditForm({ server, tags }: Props) {
 
                     <Input
                         className="w-[320px]"
-                        description="This will not affect the existing access keys. Make sure the port is not in use by other programs"
+                        description="不会影响已有访问密钥。请确保端口未被其他程序占用"
                         isInvalid={!!form.formState.errors.portForNewAccessKeys}
-                        label="Port for new access keys (Max: 65535)"
+                        label="新访问密钥端口（最大 65535）"
                         required={true}
                         size="sm"
                         type="number"
@@ -152,7 +151,7 @@ export default function ServerEditForm({ server, tags }: Props) {
                     />
 
                     <CheckboxGroup
-                        label="Tags"
+                        label="标签"
                         value={form.watch("tags")}
                         onChange={(values) => form.setValue("tags", values)}
                     >
@@ -170,17 +169,16 @@ export default function ServerEditForm({ server, tags }: Props) {
                         type="submit"
                         variant="shadow"
                     >
-                        Save
+                        保存
                     </Button>
                 </form>
 
                 <Divider />
 
                 <div className="p-2 grid gap-4">
-                    <span className="text-lg">Remove The Server</span>
+                    <span className="text-lg">移除服务器</span>
                     <p className="text-default-500 text-sm">
-                        Please note that this action will only remove the server from the {app.name}&apos;s database.
-                        The server itself will not be affected.
+                        请注意，此操作只会从 {app.name} 的数据库中移除服务器，不会影响服务器本身。
                     </p>
                     <Button
                         className="w-fit"
@@ -188,7 +186,7 @@ export default function ServerEditForm({ server, tags }: Props) {
                         variant="shadow"
                         onPress={removeServerConfirmModalDisclosure.onOpen}
                     >
-                        Remove
+                        移除
                     </Button>
                 </div>
             </div>

@@ -26,32 +26,32 @@ import DonationModal from "@/src/components/modals/donation-modal";
 
 const menuItems = [
     {
-        label: "Servers",
+        label: "服务器",
         pathName: "/servers",
         icon: <ServersIcon size={24} />
     },
     {
-        label: "Dynamic Access Keys",
+        label: "动态访问密钥",
         pathName: "/dynamic-access-keys",
         icon: <DynamicAccessKeyIcon size={24} />
     },
     {
-        label: "Health Checks",
+        label: "健康检查",
         pathName: "/health-checks",
         icon: <HealthCheckIcon size={24} />
     },
     {
-        label: "Notification Channels",
+        label: "通知渠道",
         pathName: "/notification-channels",
         icon: <BellIcon size={24} />
     },
     {
-        label: "Tags",
+        label: "标签",
         pathName: "/tags",
         icon: <HashtagIcon size={24} />
     }
     // {
-    //     label: "Settings",
+    //     label: "标签",
     //     pathName: "#",
     //     icon: <SettingsIcon size={24} />
     // }
@@ -92,19 +92,19 @@ export const SideMenu = ({ drawerDisclosure }: Props) => {
                         </NextLink>
 
                         <div className="flex gap-6 items-center justify-center">
-                            <Tooltip closeDelay={100} content="Donation">
+                            <Tooltip closeDelay={100} content="赞助">
                                 <Link href="#" onPress={donationModalDisclosure.onOpen}>
                                     <HeartIconDuotone className="text-default-500" size={24} />
                                 </Link>
                             </Tooltip>
 
-                            <Tooltip closeDelay={100} content="Github page">
+                            <Tooltip closeDelay={100} content="GitHub 页面">
                                 <Link isExternal href={app.links.github}>
                                     <GithubIcon className="text-default-500" size={24} />
                                 </Link>
                             </Tooltip>
 
-                            <Tooltip closeDelay={100} content="Reddit page">
+                            <Tooltip closeDelay={100} content="Reddit 页面">
                                 <Link isExternal href={app.links.outlineVpn.index}>
                                     <RedditIcon className="text-default-500" size={24} />
                                 </Link>
@@ -138,11 +138,11 @@ export const SideMenu = ({ drawerDisclosure }: Props) => {
                             type="submit"
                             variant="flat"
                         >
-                            Logout
+                            退出登录
                         </Button>
                     </form>
 
-                    <Tooltip color="foreground" content="Change log" size="sm">
+                    <Tooltip color="foreground" content="更新日志" size="sm">
                         <NextLink
                             className="text-xs text-foreground-400 font-normal mx-auto"
                             href={`${app.links.github}/releases/tag/v${process.env.VERSION}`}

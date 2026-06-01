@@ -6,7 +6,7 @@ import AccessKeyForm from "@/src/components/access-key-form";
 import { getAccessKeyById } from "@/src/core/actions/access-key";
 
 export const metadata: Metadata = {
-    title: createPageTitle("Edit Access Key")
+    title: createPageTitle("编辑访问密钥")
 };
 
 interface Props {

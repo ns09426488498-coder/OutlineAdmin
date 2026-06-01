@@ -5,7 +5,7 @@ import { createPageTitle } from "@/src/core/utils";
 import ServerAddForm from "@/src/components/server-add-form";
 
 export const metadata: Metadata = {
-    title: createPageTitle("Add Server")
+    title: createPageTitle("添加服务器")
 };
 
 export default function AddServerPage() {

@@ -69,17 +69,17 @@ export default function TagForm({ tag }: Props) {
                     </div>
                 }
                 disclosure={errorModalDisclosure}
-                title="Error!"
+                title="错误！"
             />
             <div className="grid gap-6 w-full">
                 <section className="flex justify-start items-center gap-2">
-                    <Tooltip closeDelay={100} color="default" content="Tags" delay={600} size="sm">
+                    <Tooltip closeDelay={100} color="default" content="标签" delay={600} size="sm">
                         <Button isIconOnly as={Link} href="/tags" size="sm" variant="light">
                             <ArrowLeftIcon size={20} />
                         </Button>
                     </Tooltip>
 
-                    <h1 className="text-xl">{tag ? "Edit Tag" : "New Tag"}</h1>
+                    <h1 className="text-xl">{tag ? "编辑标签" : "新建标签"}</h1>
                 </section>
 
                 <form className="w-full max-w-[464px] grid gap-4" onSubmit={handleSubmit(actualSubmit)}>
@@ -87,11 +87,11 @@ export default function TagForm({ tag }: Props) {
                         color="primary"
                         errorMessage={formState.errors.name?.message}
                         isInvalid={!!formState.errors.name}
-                        label="Name"
+                        label="名称"
                         placeholder="e.g. Irancell"
                         variant="underlined"
                         {...register("name", {
-                            required: "The name is required"
+                            required: "名称为必填项"
                         })}
                     />
 

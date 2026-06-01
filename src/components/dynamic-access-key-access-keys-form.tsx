@@ -55,14 +55,14 @@ export default function DynamicAccessKeyAccessKeysForm({ dynamicAccessKey, serve
             <div className="grid gap-6">
                 <section className="flex justify-between items-center gap-2">
                     <section className="flex items-center gap-2">
-                        <Tooltip closeDelay={100} color="default" content="Servers" delay={600} size="sm">
+                        <Tooltip closeDelay={100} color="default" content="服务器" delay={600} size="sm">
                             <Button as={Link} href="/dynamic-access-keys" isIconOnly={true} size="sm" variant="light">
                                 <ArrowLeftIcon size={20} />
                             </Button>
                         </Tooltip>
 
                         <h1 className="text-xl">
-                            <q>{dynamicAccessKey.name}</q> Access Keys
+                            <q>{dynamicAccessKey.name}</q> 访问密钥
                         </h1>
                     </section>
 
@@ -96,7 +96,7 @@ export default function DynamicAccessKeyAccessKeysForm({ dynamicAccessKey, serve
                                                     size="sm"
                                                     variant="flat"
                                                 >
-                                                    {server.isAvailable ? "Available" : "Not Available"}
+                                                    {server.isAvailable ? "可用" : "不可用"}
                                                 </Chip>
                                             </div>
                                         </div>

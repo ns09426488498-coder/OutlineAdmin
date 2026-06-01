@@ -1,35 +1,97 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { DynamicAccessKey } from "@prisma/client";
+import { DynamicAccessKey, Prisma } from "@prisma/client";
 
 import prisma from "@/prisma/db";
 import {
+    DynamicAccessKeySortField,
     DynamicAccessKeyStats,
     DynamicAccessKeyWithAccessKeys,
     DynamicAccessKeyWithAccessKeysCount,
     EditDynamicAccessKeyRequest,
-    NewDynamicAccessKeyRequest
+    NewDynamicAccessKeyRequest,
+    SortDirection
 } from "@/src/core/definitions";
 import { PAGE_SIZE } from "@/src/core/config";
 import { removeAccessKey } from "@/src/core/actions/access-key";
 
+type DynamicAccessKeyFilters = {
+    term?: string;
+    skip?: number;
+    take?: number;
+    sortField?: DynamicAccessKeySortField;
+    sortDirection?: SortDirection;
+};
+
+const getDynamicAccessKeyExpiryTime = (dak: DynamicAccessKey): number => {
+    if (dak.expiresAt) return dak.expiresAt.getTime();
+
+    if (dak.usageStartedAt && dak.validityPeriod) {
+        return dak.usageStartedAt.getTime() + Number(dak.validityPeriod) * 24 * 60 * 60 * 1000;
+    }
+
+    return Number.POSITIVE_INFINITY;
+};
+
+const getDynamicAccessKeyRemainingData = (dak: DynamicAccessKey): bigint | null => {
+    if (dak.dataLimit === null) return null;
+
+    return dak.dataLimit - dak.dataUsage;
+};
+
 export async function getDynamicAccessKeys(
-    filters?: { term?: string; skip?: number; take?: number },
+    filters?: DynamicAccessKeyFilters,
     withKeysCount: boolean = false
 ): Promise<DynamicAccessKeyWithAccessKeysCount[]> {
-    const { skip = 0, take = PAGE_SIZE, term } = filters || {};
+    const { skip = 0, take = PAGE_SIZE, term, sortField = "id", sortDirection = "desc" } = filters || {};
+    const where: Prisma.DynamicAccessKeyWhereInput = {
+        OR: term ? [{ name: { contains: term } }] : undefined
+    };
+    const include = {
+        _count: withKeysCount ? { select: { accessKeys: true } } : undefined
+    };
+
+    if (sortField === "expiresAt" || sortField === "remainingData") {
+        const data = await prisma.dynamicAccessKey.findMany({
+            where,
+            include
+        });
+
+        return data
+            .sort((a, b) => {
+                let result: number;
+
+                if (sortField === "remainingData") {
+                    const aRemaining = getDynamicAccessKeyRemainingData(a);
+                    const bRemaining = getDynamicAccessKeyRemainingData(b);
+
+                    if (aRemaining === null && bRemaining === null) {
+                        result = 0;
+                    } else if (aRemaining === null) {
+                        result = 1;
+                    } else if (bRemaining === null) {
+                        result = -1;
+                    } else {
+                        result = aRemaining < bRemaining ? -1 : aRemaining > bRemaining ? 1 : 0;
+                    }
+                } else {
+                    result = getDynamicAccessKeyExpiryTime(a) - getDynamicAccessKeyExpiryTime(b);
+                }
+
+                return sortDirection === "asc" ? result : -result;
+            })
+            .slice(skip, skip + take);
+    }
+
+    const orderBy: Prisma.DynamicAccessKeyOrderByWithRelationInput[] = [{ [sortField]: sortDirection }, { id: "desc" }];
 
     return prisma.dynamicAccessKey.findMany({
-        where: {
-            OR: term ? [{ name: { contains: term } }] : undefined
-        },
+        where,
         skip,
         take,
-        orderBy: [{ id: "desc" }],
-        include: {
-            _count: withKeysCount ? { select: { accessKeys: true } } : undefined
-        }
+        orderBy,
+        include
     });
 }
 
@@ -39,8 +101,7 @@ export async function getDynamicAccessKeysCount(filters?: { term?: string }): Pr
     return prisma.dynamicAccessKey.count({
         where: {
             OR: term ? [{ name: { contains: term } }] : undefined
-        },
-        orderBy: [{ id: "desc" }]
+        }
     });
 }
 
@@ -141,11 +202,24 @@ export async function updateDynamicAccessKey(data: EditDynamicAccessKeyRequest):
 }
 
 export async function resetDynamicAccessKeyUsage(id: number): Promise<void> {
+    const dak = await prisma.dynamicAccessKey.findUnique({
+        where: { id }
+    });
+
+    if (!dak) {
+        return;
+    }
+
+    if (dak.isSelfManaged) {
+        await removeSelfManagedDynamicAccessKeyAccessKeys(id);
+    }
+
     await prisma.dynamicAccessKey.update({
         where: { id },
         data: {
             dataUsage: 0,
-            usageStartedAt: null
+            usageStartedAt: null,
+            activeServerId: null
         }
     });
 
@@ -174,7 +248,7 @@ export async function removeSelfManagedDynamicAccessKeyAccessKeys(id: number): P
     const pattern = `self-managed-dak-access-key-${id}`;
     const accessKeys = await prisma.accessKey.findMany({
         where: {
-            name: { contains: pattern }
+            name: pattern
         }
     });
 

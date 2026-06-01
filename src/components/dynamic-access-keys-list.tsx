@@ -13,14 +13,14 @@ import {
     Tooltip,
     useDisclosure
 } from "@heroui/react";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { DynamicAccessKey } from "@prisma/client";
 import { Link } from "@heroui/link";
 
 import ConfirmModal from "@/src/components/modals/confirm-modal";
 import { InfoIcon, PlusIcon, SelfManagedKeyIcon } from "@/src/components/icons";
-import { DynamicAccessKeyWithAccessKeysCount } from "@/src/core/definitions";
+import { DynamicAccessKeySortField, DynamicAccessKeyWithAccessKeysCount, SortDirection } from "@/src/core/definitions";
 import {
     getDynamicAccessKeys,
     getDynamicAccessKeysCount,
@@ -43,6 +43,8 @@ export default function DynamicAccessKeysList() {
     const [page, setPage] = useState<number>(1);
     const [totalItems, setTotalItems] = useState<number>(1);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [sortField, setSortField] = useState<DynamicAccessKeySortField>("id");
+    const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
     const totalPage = Math.ceil(totalItems / PAGE_SIZE);
 
@@ -53,7 +55,9 @@ export default function DynamicAccessKeysList() {
     const searchForm = useForm<SearchFormProps>();
     const handleSearch = async (data: SearchFormProps) => {
         const params = {
-            term: data.term
+            term: data.term,
+            sortField,
+            sortDirection
         };
 
         const filteredServers = await getDynamicAccessKeys(params, true);
@@ -87,8 +91,13 @@ export default function DynamicAccessKeysList() {
         return `${swappedProtocol}/api/dak/${currentDynamicAccessKey.path}#${name}`;
     };
 
-    const updateData = async () => {
-        const params = { skip: (page - 1) * PAGE_SIZE, term: searchForm.getValues("term") };
+    const updateData = useCallback(async () => {
+        const params = {
+            skip: (page - 1) * PAGE_SIZE,
+            term: searchForm.getValues("term"),
+            sortField,
+            sortDirection
+        };
 
         setIsLoading(true);
 
@@ -103,11 +112,22 @@ export default function DynamicAccessKeysList() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [page, searchForm, sortDirection, sortField]);
 
     useEffect(() => {
         updateData();
-    }, [page]);
+    }, [updateData]);
+
+    const handleSortFieldChange = (value: DynamicAccessKeySortField) => {
+        setSortField(value);
+        setSortDirection(value === "remainingData" ? "asc" : "desc");
+        setPage(1);
+    };
+
+    const handleSortDirectionChange = (value: SortDirection) => {
+        setSortDirection(value);
+        setPage(1);
+    };
 
     return (
         <>
@@ -116,38 +136,38 @@ export default function DynamicAccessKeysList() {
             <ConfirmModal
                 body={
                     <div className="grid gap-2">
-                        <span>Are you sure you want to Delete this dynamic access key?</span>
+                        <span>确定要删除这个动态访问密钥吗？</span>
                         <p className="text-foreground-500 text-sm whitespace-pre-wrap break-all">
                             {getCurrentAccessKeyUrl()}
                         </p>
                     </div>
                 }
-                confirmLabel="Delete"
+                confirmLabel="删除"
                 disclosure={deleteConfirmModalDisclosure}
-                title="Delete Dyanmic Access Key"
+                title="删除动态访问密钥"
                 onConfirm={handleDelete}
             />
 
             <ConfirmModal
                 body={
                     <div className="grid gap-2">
-                        <span>Are you sure you want to reset this dynamic access key?</span>
+                        <span>确定要重置这个动态访问密钥吗？</span>
                         <p className="text-foreground-500 text-sm whitespace-pre-wrap break-all">
-                            This action will set the data usage to 0 and the usage start date to null.
+                            这个操作会将已用流量清零。自主管理密钥会在下次订阅请求时删除并重新创建。
                         </p>
                     </div>
                 }
-                confirmLabel="Reset"
+                confirmLabel="重置"
                 disclosure={resetConfirmModalDisclosure}
-                title="Reset Dyanmic Access Key"
+                title="重置动态访问密钥"
                 onConfirm={handleReset}
             />
 
             <div className="grid gap-4">
                 <div className="flex gap-2 items-center">
-                    <h1 className="text-xl">Dynamic Access Keys</h1>
+                    <h1 className="text-xl">动态访问密钥</h1>
 
-                    <Tooltip content="Read more about dynamic access keys">
+                    <Tooltip content="了解动态访问密钥">
                         <Link href={app.links.outlineVpn.dynamicAccessKeys} target="_blank">
                             <InfoIcon size={20} />
                         </Link>
@@ -156,16 +176,59 @@ export default function DynamicAccessKeysList() {
 
                 <DynamicAccessKeysSslWarning />
 
-                <div className="flex justify-between items-center gap-2">
+                <div className="flex flex-wrap justify-between items-center gap-2">
                     <form onSubmit={searchForm.handleSubmit(handleSearch)}>
                         <Input
                             className="w-fit"
-                            placeholder="Name [+Enter]"
+                            placeholder="名称 [+回车]"
                             startContent={<>🔍</>}
                             variant="faded"
                             {...searchForm.register("term")}
                         />
                     </form>
+
+                    <div className="flex flex-wrap gap-2">
+                        <ButtonGroup variant="flat">
+                            <Button
+                                color={sortField === "name" ? "primary" : "default"}
+                                isDisabled={isLoading}
+                                onPress={() => handleSortFieldChange("name")}
+                            >
+                                密钥名称
+                            </Button>
+                            <Button
+                                color={sortField === "remainingData" ? "primary" : "default"}
+                                isDisabled={isLoading}
+                                onPress={() => handleSortFieldChange("remainingData")}
+                            >
+                                剩余流量
+                            </Button>
+                            <Button
+                                color={sortField === "expiresAt" ? "primary" : "default"}
+                                isDisabled={isLoading}
+                                onPress={() => handleSortFieldChange("expiresAt")}
+                            >
+                                到期时间
+                            </Button>
+                        </ButtonGroup>
+
+                        <ButtonGroup variant="flat">
+                            <Button
+                                color={sortDirection === "asc" ? "primary" : "default"}
+                                isDisabled={isLoading}
+                                onPress={() => handleSortDirectionChange("asc")}
+                            >
+                                升序
+                            </Button>
+                            <Button
+                                color={sortDirection === "desc" ? "primary" : "default"}
+                                isDisabled={isLoading}
+                                onPress={() => handleSortDirectionChange("desc")}
+                            >
+                                降序
+                            </Button>
+                        </ButtonGroup>
+                    </div>
 
                     <Button
                         as={Link}
@@ -174,7 +237,7 @@ export default function DynamicAccessKeysList() {
                         startContent={<PlusIcon size={20} />}
                         variant="shadow"
                     >
-                        Create
+                        新建
                     </Button>
                 </div>
 
@@ -198,25 +261,25 @@ export default function DynamicAccessKeysList() {
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>Management type</span>
+                                    <span>管理方式</span>
                                     {item.isSelfManaged ? (
                                         <Chip color="secondary" radius="sm" size="sm" variant="flat">
-                                            Self-Managed
+                                            自主管理
                                         </Chip>
                                     ) : (
                                         <Chip color="default" radius="sm" size="sm" variant="flat">
-                                            Manual
+                                            手动
                                         </Chip>
                                     )}
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>Data usage</span>
+                                    <span>已用流量</span>
                                     <DynamicAccessKeyDataUsageChip item={item} />
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>Number of keys</span>
+                                    <span>密钥数量</span>
                                     <Chip
                                         color="default"
                                         radius="sm"
@@ -224,31 +287,31 @@ export default function DynamicAccessKeysList() {
                                         startContent={item.isSelfManaged && <SelfManagedKeyIcon size={18} />}
                                         variant="flat"
                                     >
-                                        {item.isSelfManaged ? <span>Auto</span> : item._count?.accessKeys}
+                                        {item.isSelfManaged ? <span>自动</span> : item._count?.accessKeys}
                                     </Chip>
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>Load balancer</span>
+                                    <span>负载均衡</span>
                                     <Chip color="default" radius="sm" size="sm" variant="flat">
                                         {item.loadBalancerAlgorithm}
                                     </Chip>
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>Prefix</span>
+                                    <span>前缀</span>
                                     <Chip
                                         color={item.prefix ? "success" : "default"}
                                         radius="sm"
                                         size="sm"
                                         variant="flat"
                                     >
-                                        {item.prefix ? item.prefix : "None"}
+                                        {item.prefix ? item.prefix : "无"}
                                     </Chip>
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>Validity</span>
+                                    <span>有效期</span>
                                     <DynamicAccessKeyValidityChip dak={item} />
                                 </div>
                             </CardBody>
@@ -260,7 +323,7 @@ export default function DynamicAccessKeysList() {
                                             dynamicAccessKeyModalDisclosure.onOpen();
                                         }}
                                     >
-                                        Share
+                                        分享
                                     </Button>
 
                                     {item.isSelfManaged ? (
@@ -270,16 +333,16 @@ export default function DynamicAccessKeysList() {
                                                 resetConfirmModalDisclosure.onOpen();
                                             }}
                                         >
-                                            Reset
+                                            重置
                                         </Button>
                                     ) : (
                                         <Button as={Link} href={`/dynamic-access-keys/${item.id}/access-keys`}>
-                                            Access Keys
+                                            访问密钥
                                         </Button>
                                     )}
 
                                     <Button as={Link} href={`/dynamic-access-keys/${item.id}/edit`}>
-                                        Edit
+                                        编辑
                                     </Button>
 
                                     <Button
@@ -289,7 +352,7 @@ export default function DynamicAccessKeysList() {
                                             deleteConfirmModalDisclosure.onOpen();
                                         }}
                                     >
-                                        Delete
+                                        删除
                                     </Button>
                                 </ButtonGroup>
                             </CardFooter>

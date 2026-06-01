@@ -14,7 +14,7 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
         <div className="flex flex-col gap-4 h-full justify-center items-center">
             <div className="text-6xl font-cursive text-foreground-500">(ó﹏ò｡)</div>
             <Divider className="opacity-65 w-[264px] mt-4" />
-            <div className="text-2xl text-foreground-500">500 - SERVER ERROR</div>
+            <div className="text-2xl text-foreground-500">500 - 服务器错误</div>
             <Button variant="light" onPress={() => reset()}>
                 Try Again
             </Button>

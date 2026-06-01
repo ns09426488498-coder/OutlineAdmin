@@ -50,7 +50,7 @@ export default function ConfirmModal({
                             disclosure.onClose();
                         }}
                     >
-                        {confirmLabel ?? "Ok"}
+                        {confirmLabel ?? "??"}
                     </Button>
                 </ModalFooter>
             </ModalContent>

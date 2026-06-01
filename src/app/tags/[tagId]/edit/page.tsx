@@ -6,7 +6,7 @@ import TagForm from "@/src/components/tag-form";
 import { getTagById } from "@/src/core/actions/tags";
 
 export const metadata: Metadata = {
-    title: createPageTitle("Edit Tag")
+    title: createPageTitle("编辑标签")
 };
 
 interface Props {

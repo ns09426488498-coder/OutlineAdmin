@@ -20,7 +20,7 @@ export default function AccessKeyDataUsageChip({ item }: Props) {
             <div className="flex gap-2 items-center">
                 <span>{formatBytes(Number(item.dataUsage))}</span>
 
-                <span className="text-default-500">of</span>
+                <span className="text-default-500">/ </span>
                 {item.dataLimit ? (
                     <span>{formatBytes(convertDataLimitToUnit(Number(item.dataLimit), DataLimitUnit.MB))}</span>
                 ) : (

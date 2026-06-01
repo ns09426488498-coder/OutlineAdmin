@@ -13,7 +13,7 @@ interface Props {
 }
 
 export const metadata: Metadata = {
-    title: createPageTitle("Access Keys -> Dynamic Access Key")
+    title: createPageTitle("访问密钥 -> 动态访问密钥")
 };
 
 export default async function DynamicAccessKeyAccessKeysFormPage({ params }: Props) {

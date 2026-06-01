@@ -96,26 +96,26 @@ export default function NotificationChannelsList({ data }: Props) {
                 body={
                     <div className="grid gap-2">
                         <span>
-                            Are you sure you want to delete <q>{channel?.name}</q> notification channel?
+                            确定要删除通知渠道 <q>{channel?.name}</q> 吗？
                         </span>
                     </div>
                 }
-                confirmLabel="Remove"
+                confirmLabel="删除"
                 disclosure={deleteConfirmModalDisclosure}
-                title="Delete Notification Channel"
+                title="删除通知渠道"
                 onConfirm={handleDelete}
             />
 
             <div className="grid gap-4">
                 <section className="flex justify-start items-center gap-2">
-                    <h1 className="text-xl">Notification Channels</h1>
+                    <h1 className="text-xl">通知渠道</h1>
                 </section>
 
                 <div className="flex justify-between items-center gap-2">
                     <form onSubmit={searchForm.handleSubmit(handleSearch)}>
                         <Input
                             className="w-fit"
-                            placeholder="Name [+Enter]"
+                            placeholder="名称 [+回车]"
                             startContent={<>🔍</>}
                             variant="faded"
                             {...searchForm.register("term")}
@@ -163,7 +163,7 @@ export default function NotificationChannelsList({ data }: Props) {
 
                                 <TableCell>
                                     <div className="flex gap-2 justify-center items-center">
-                                        <Tooltip closeDelay={100} color="primary" content="Edit" delay={600} size="sm">
+                                        <Tooltip closeDelay={100} color="primary" content="编辑" delay={600} size="sm">
                                             <Button
                                                 as={Link}
                                                 color="primary"
@@ -176,7 +176,7 @@ export default function NotificationChannelsList({ data }: Props) {
                                             </Button>
                                         </Tooltip>
 
-                                        <Tooltip closeDelay={100} color="danger" content="Delete" delay={600} size="sm">
+                                        <Tooltip closeDelay={100} color="danger" content="编辑" delay={600} size="sm">
                                             <Button
                                                 color="danger"
                                                 isIconOnly={true}

@@ -13,7 +13,7 @@ interface Props {
 }
 
 export const metadata: Metadata = {
-    title: createPageTitle("Health Check Details")
+    title: createPageTitle("健康检查详情")
 };
 
 export default async function HealthCheckEditPage({ params }: Props) {
