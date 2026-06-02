@@ -37,6 +37,7 @@ model Server {
   accessKeys               AccessKey[]
   healthCheck              HealthCheck?
   tags                     ServerTag[]
+  trafficSnapshots         ServerTrafficSnapshot[]
 }
 
 model AccessKey {
@@ -129,4 +130,16 @@ model ServerTag {
   tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([serverId, tagId])
+}
+
+model ServerTrafficSnapshot {
+  id             Int      @id @default(autoincrement())
+  serverId       Int
+  totalDataUsage BigInt   @default(0)
+  capturedAt     DateTime @default(now())
+
+  server Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  @@index([serverId, capturedAt])
+  @@index([capturedAt])
 }

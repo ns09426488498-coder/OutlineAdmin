@@ -62,6 +62,18 @@ export type TranslationKey =
     | "sortAscending"
     | "status"
     | "tags"
+    | "activeServers"
+    | "custom"
+    | "noTrafficData"
+    | "serverTrafficRanking"
+    | "sevenDays"
+    | "threeDays"
+    | "timeRange"
+    | "today"
+    | "totalTraffic"
+    | "trafficStats"
+    | "trafficTrend"
+    | "yesterday"
     | "totalUsedData"
     | "unavailable"
     | "unlimited"
@@ -127,6 +139,18 @@ const dictionaries: Record<Language, Record<TranslationKey, string>> = {
         sortAscending: "升序",
         status: "状态",
         tags: "标签",
+        activeServers: "活跃服务器",
+        custom: "自定义",
+        noTrafficData: "暂无流量数据",
+        serverTrafficRanking: "服务器流量排行",
+        sevenDays: "7天",
+        threeDays: "3天",
+        timeRange: "时间范围",
+        today: "今天",
+        totalTraffic: "总流量",
+        trafficStats: "流量统计",
+        trafficTrend: "流量趋势",
+        yesterday: "昨天",
         totalUsedData: "总已用流量",
         unavailable: "不可用",
         unlimited: "无限制",
@@ -193,6 +217,18 @@ const dictionaries: Record<Language, Record<TranslationKey, string>> = {
         sortAscending: "Ascending",
         status: "Status",
         tags: "Tags",
+        activeServers: "Active Servers",
+        custom: "Custom",
+        noTrafficData: "No traffic data yet",
+        serverTrafficRanking: "Server Traffic Ranking",
+        sevenDays: "7 Days",
+        threeDays: "3 Days",
+        timeRange: "Time Range",
+        today: "Today",
+        totalTraffic: "Total Traffic",
+        trafficStats: "Traffic Stats",
+        trafficTrend: "Traffic Trend",
+        yesterday: "Yesterday",
         totalUsedData: "Total Used Data",
         unavailable: "Unavailable",
         unlimited: "Unlimited",

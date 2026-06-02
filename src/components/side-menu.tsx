@@ -17,7 +17,8 @@ import {
     HeartIconDuotone,
     Logo,
     RedditIcon,
-    ServersIcon
+    ServersIcon,
+    StatsIcon
 } from "@/src/components/icons";
 import { app } from "@/src/core/config";
 import { logout } from "@/src/core/actions";
@@ -36,6 +37,11 @@ const menuItems = [
         labelKey: "dynamicAccessKeys" as const,
         pathName: "/dynamic-access-keys",
         icon: <DynamicAccessKeyIcon size={24} />
+    },
+    {
+        labelKey: "trafficStats" as const,
+        pathName: "/traffic",
+        icon: <StatsIcon size={24} />
     },
     {
         labelKey: "healthChecks" as const,

@@ -63,8 +63,31 @@ export class OutlineSyncService {
                 }
             });
 
+            await prisma.serverTrafficSnapshot.create({
+                data: {
+                    serverId: this.server.id,
+                    totalDataUsage: totalUsageMetrics
+                }
+            });
+
+            await this.pruneOldTrafficSnapshots();
+
             await this.syncAccessKeys(metrics);
         }
+    }
+
+    protected async pruneOldTrafficSnapshots(): Promise<void> {
+        const retentionDays = 45;
+        const cutoffDate = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
+
+        await prisma.serverTrafficSnapshot.deleteMany({
+            where: {
+                serverId: this.server.id,
+                capturedAt: {
+                    lt: cutoffDate
+                }
+            }
+        });
     }
 
     protected async syncAccessKeys(metrics: Outline.Metrics): Promise<void> {
