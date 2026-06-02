@@ -20,7 +20,7 @@ import { PlusIcon } from "@/src/components/icons";
 import { getServersWithTags, removeServer } from "@/src/core/actions/server";
 import { ServerWithAccessKeysCountAndTags } from "@/src/core/definitions";
 import { formatBytes } from "@/src/core/utils";
-import { app } from "@/src/core/config";
+import { useLanguage } from "@/src/components/language-provider";
 
 interface Props {
     data: ServerWithAccessKeysCountAndTags[];
@@ -34,6 +34,7 @@ export default function ServersList({ data }: Props) {
     const [servers, setServers] = useState<ServerWithAccessKeysCountAndTags[]>(data);
     const [serverToRemove, setServerToRemove] = useState<number | null>(null);
     const removeServerConfirmModalDisclosure = useDisclosure();
+    const { t } = useLanguage();
 
     const searchForm = useForm<SearchFormProps>();
     const handleSearch = async (data: SearchFormProps) => {
@@ -62,26 +63,24 @@ export default function ServersList({ data }: Props) {
             <ConfirmModal
                 body={
                     <div className="grid gap-2">
-                        <span>确定要移除这台服务器吗？</span>
-                        <p className="text-default-500 text-sm">
-                            请注意，此操作只会从 {app.name} 的数据库中移除服务器，不会影响服务器本身。
-                        </p>
+                        <span>{t("removeServerConfirm")}</span>
+                        <p className="text-default-500 text-sm">{t("removeServerNote")}</p>
                     </div>
                 }
-                confirmLabel="移除"
+                confirmLabel={t("remove")}
                 disclosure={removeServerConfirmModalDisclosure}
-                title="移除服务器"
+                title={t("removeServer")}
                 onConfirm={handleRemoveServer}
             />
 
             <div className="grid gap-4">
-                <h1 className="text-xl">服务器</h1>
+                <h1 className="text-xl">{t("servers")}</h1>
 
                 <div className="flex justify-between items-center gap-2">
                     <form onSubmit={searchForm.handleSubmit(handleSearch)}>
                         <Input
                             className="w-fit"
-                            placeholder="名称或主机名 [+回车]"
+                            placeholder={t("nameOrHostSearchPlaceholder")}
                             startContent={<>🔍</>}
                             variant="faded"
                             {...searchForm.register("term")}
@@ -95,7 +94,7 @@ export default function ServersList({ data }: Props) {
                         startContent={<PlusIcon size={20} />}
                         variant="shadow"
                     >
-                        添加
+                        {t("add")}
                     </Button>
                 </div>
 
@@ -109,93 +108,93 @@ export default function ServersList({ data }: Props) {
                             </CardHeader>
                             <CardBody className="text-sm grid gap-2">
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>ID</span>
+                                    <span>{t("id")}</span>
                                     <Chip radius="sm" size="sm" variant="flat">
                                         {item.id}
                                     </Chip>
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>主机/IP</span>
+                                    <span>{t("hostIp")}</span>
                                     <Chip radius="sm" size="sm" variant="flat">
                                         {item.hostnameOrIp}
                                     </Chip>
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>新访问密钥主机/IP</span>
+                                    <span>{t("newAccessKeyHost")}</span>
                                     <Chip radius="sm" size="sm" variant="flat">
                                         {item.hostnameForNewAccessKeys}
                                     </Chip>
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>新访问密钥端口</span>
+                                    <span>{t("newAccessKeyPort")}</span>
                                     <Chip radius="sm" size="sm" variant="flat">
                                         {item.portForNewAccessKeys}
                                     </Chip>
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>密钥数量</span>
+                                    <span>{t("keyCount")}</span>
                                     <Chip color="default" radius="sm" size="sm" variant="flat">
                                         {item._count?.accessKeys}
                                     </Chip>
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>总已用流量</span>
+                                    <span>{t("totalUsedData")}</span>
                                     <Chip color="default" radius="sm" size="sm" variant="flat">
                                         {formatBytes(Number(item.totalDataUsage))}
                                     </Chip>
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>状态</span>
+                                    <span>{t("status")}</span>
                                     <Chip
                                         color={item.isAvailable ? "success" : "danger"}
                                         radius="sm"
                                         size="sm"
                                         variant="flat"
                                     >
-                                        {item.isAvailable ? "可用" : "不可用"}
+                                        {item.isAvailable ? t("available") : t("unavailable")}
                                     </Chip>
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>状态</span>
+                                    <span>{t("tags")}</span>
 
                                     {item.tags.length > 0 ? (
                                         <div className="flex gap-2 justify-end items-center flex-wrap">
-                                            {item.tags.map((t) => (
+                                            {item.tags.map((tag) => (
                                                 <Chip
-                                                    key={t.tag.id}
+                                                    key={tag.tag.id}
                                                     color="default"
                                                     radius="sm"
                                                     size="sm"
                                                     variant="flat"
                                                 >
-                                                    {t.tag.name}
+                                                    {tag.tag.name}
                                                 </Chip>
                                             ))}
                                         </div>
                                     ) : (
-                                        <span className="text-foreground-400">¯\_(ツ)_/¯</span>
+                                        <span className="text-foreground-400">-</span>
                                     )}
                                 </div>
                             </CardBody>
                             <CardFooter>
                                 <ButtonGroup color="default" fullWidth={true} size="sm" variant="flat">
                                     <Button as={Link} href={`/servers/${item.id}/access-keys`}>
-                                        访问密钥
+                                        {t("accessKeys")}
                                     </Button>
 
                                     <Button as={Link} href={`/servers/${item.id}/settings`}>
-                                        设置
+                                        {t("serverSettings")}
                                     </Button>
 
                                     <Button as={Link} href={`/servers/${item.id}/metrics`}>
-                                        监控指标
+                                        {t("metrics")}
                                     </Button>
 
                                     <Button
@@ -205,7 +204,7 @@ export default function ServersList({ data }: Props) {
                                             removeServerConfirmModalDisclosure.onOpen();
                                         }}
                                     >
-                                        删除
+                                        {t("delete")}
                                     </Button>
                                 </ButtonGroup>
                             </CardFooter>

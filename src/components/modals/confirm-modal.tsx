@@ -4,6 +4,8 @@ import { UseDisclosureReturn } from "@heroui/use-disclosure";
 import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from "@heroui/react";
 import { ReactNode, useState } from "react";
 
+import { useLanguage } from "@/src/components/language-provider";
+
 interface Props {
     disclosure: UseDisclosureReturn;
     title?: string | ReactNode;
@@ -22,6 +24,7 @@ export default function ConfirmModal({
     onConfirm = () => {}
 }: Props) {
     const [isPerformingIntendedAction, setIsPerformingIntendedAction] = useState<boolean>(false);
+    const { t } = useLanguage();
 
     return (
         <Modal
@@ -36,7 +39,7 @@ export default function ConfirmModal({
                 {body && <ModalBody>{body}</ModalBody>}
                 <ModalFooter className="flex justify-between gap-2 mt-4">
                     <Button isDisabled={isPerformingIntendedAction} variant="flat" onPress={disclosure.onClose}>
-                        Cancel
+                        {t("cancel")}
                     </Button>
 
                     <Button
@@ -50,7 +53,7 @@ export default function ConfirmModal({
                             disclosure.onClose();
                         }}
                     >
-                        {confirmLabel ?? "??"}
+                        {confirmLabel ?? t("delete")}
                     </Button>
                 </ModalFooter>
             </ModalContent>

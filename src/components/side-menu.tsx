@@ -23,38 +23,35 @@ import { app } from "@/src/core/config";
 import { logout } from "@/src/core/actions";
 import { ThemeSwitch } from "@/src/components/theme-switch";
 import DonationModal from "@/src/components/modals/donation-modal";
+import LanguageSwitch from "@/src/components/language-switch";
+import { useLanguage } from "@/src/components/language-provider";
 
 const menuItems = [
     {
-        label: "服务器",
+        labelKey: "servers" as const,
         pathName: "/servers",
         icon: <ServersIcon size={24} />
     },
     {
-        label: "动态访问密钥",
+        labelKey: "dynamicAccessKeys" as const,
         pathName: "/dynamic-access-keys",
         icon: <DynamicAccessKeyIcon size={24} />
     },
     {
-        label: "健康检查",
+        labelKey: "healthChecks" as const,
         pathName: "/health-checks",
         icon: <HealthCheckIcon size={24} />
     },
     {
-        label: "通知渠道",
+        labelKey: "notificationChannels" as const,
         pathName: "/notification-channels",
         icon: <BellIcon size={24} />
     },
     {
-        label: "标签",
+        labelKey: "tags" as const,
         pathName: "/tags",
         icon: <HashtagIcon size={24} />
     }
-    // {
-    //     label: "标签",
-    //     pathName: "#",
-    //     icon: <SettingsIcon size={24} />
-    // }
 ];
 
 interface Props {
@@ -65,6 +62,7 @@ export const SideMenu = ({ drawerDisclosure }: Props) => {
     const currentPathname = usePathname();
     const donationModalDisclosure = useDisclosure();
     const logoutForm = useForm();
+    const { t } = useLanguage();
 
     const handleLogout = async () => {
         await logout();
@@ -92,19 +90,19 @@ export const SideMenu = ({ drawerDisclosure }: Props) => {
                         </NextLink>
 
                         <div className="flex gap-6 items-center justify-center">
-                            <Tooltip closeDelay={100} content="赞助">
+                            <Tooltip closeDelay={100} content={t("donate")}>
                                 <Link href="#" onPress={donationModalDisclosure.onOpen}>
                                     <HeartIconDuotone className="text-default-500" size={24} />
                                 </Link>
                             </Tooltip>
 
-                            <Tooltip closeDelay={100} content="GitHub 页面">
+                            <Tooltip closeDelay={100} content={t("githubPage")}>
                                 <Link isExternal href={app.links.github}>
                                     <GithubIcon className="text-default-500" size={24} />
                                 </Link>
                             </Tooltip>
 
-                            <Tooltip closeDelay={100} content="Reddit 页面">
+                            <Tooltip closeDelay={100} content={t("redditPage")}>
                                 <Link isExternal href={app.links.outlineVpn.index}>
                                     <RedditIcon className="text-default-500" size={24} />
                                 </Link>
@@ -123,13 +121,17 @@ export const SideMenu = ({ drawerDisclosure }: Props) => {
                                 onClick={handleDrawerClose}
                             >
                                 {item.icon}
-                                <span>{item.label}</span>
+                                <span>{t(item.labelKey)}</span>
                             </NextLink>
                         ))}
                     </nav>
                 </div>
 
                 <div className="p-2 grid gap-2">
+                    <div className="flex justify-center">
+                        <LanguageSwitch />
+                    </div>
+
                     <form className="w-full" onSubmit={logoutForm.handleSubmit(handleLogout)}>
                         <Button
                             color="danger"
@@ -138,11 +140,11 @@ export const SideMenu = ({ drawerDisclosure }: Props) => {
                             type="submit"
                             variant="flat"
                         >
-                            退出登录
+                            {t("logout")}
                         </Button>
                     </form>
 
-                    <Tooltip color="foreground" content="更新日志" size="sm">
+                    <Tooltip color="foreground" content={t("changelog")} size="sm">
                         <NextLink
                             className="text-xs text-foreground-400 font-normal mx-auto"
                             href={`${app.links.github}/releases/tag/v${process.env.VERSION}`}

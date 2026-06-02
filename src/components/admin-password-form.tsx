@@ -6,6 +6,7 @@ import { Button, Input } from "@heroui/react";
 
 import { UserPasswordIcon } from "@/src/components/icons";
 import { updatePassword } from "@/src/core/actions";
+import { useLanguage } from "@/src/components/language-provider";
 
 interface FormProps {
     password: string;
@@ -14,6 +15,7 @@ interface FormProps {
 export default function AdminPasswordForm() {
     const router = useRouter();
     const form = useForm<FormProps>();
+    const { t } = useLanguage();
 
     const actualSubmit = async (data: FormProps) => {
         await updatePassword(data.password);
@@ -27,7 +29,7 @@ export default function AdminPasswordForm() {
         >
             <div className="grid gap-4 place-items-center text-default-400">
                 <UserPasswordIcon size={124} />
-                <p className="text-xl mb-6">需要先为管理员设置密码</p>
+                <p className="text-xl mb-6">{t("adminPasswordIntro")}</p>
             </div>
 
             <Input
@@ -35,8 +37,8 @@ export default function AdminPasswordForm() {
                 color="primary"
                 errorMessage={form.formState.errors.password?.message}
                 isInvalid={!!form.formState.errors.password}
-                label="密码"
-                placeholder="管理员密码"
+                label={t("password")}
+                placeholder={t("passwordPlaceholder")}
                 type="password"
                 variant="underlined"
                 {...form.register("password", {
@@ -52,7 +54,7 @@ export default function AdminPasswordForm() {
                 type="submit"
                 variant="shadow"
             >
-                保存
+                {t("save")}
             </Button>
         </form>
     );

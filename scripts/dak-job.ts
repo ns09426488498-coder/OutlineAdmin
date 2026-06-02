@@ -16,12 +16,19 @@ const main = async () => {
     logger.info(`Found ${dynamicAccessKeys.length} DAK(s) to process.`);
 
     const processSelfManagedDak = async (dak: DynamicAccessKey) => {
-        const expiryDate = getDakExpiryDateBasedOnValidityPeriod(dak);
+        const validityExpiryDate = getDakExpiryDateBasedOnValidityPeriod(dak);
+        const fixedExpiryDate = dak.expiresAt;
+        const expiryDate = fixedExpiryDate ?? validityExpiryDate;
 
-        if (expiryDate && expiryDate.getTime() <= Date.now()) {
+        if (
+            (fixedExpiryDate && fixedExpiryDate.getTime() <= Date.now()) ||
+            (validityExpiryDate && validityExpiryDate.getTime() <= Date.now())
+        ) {
             logger.warn("DAK expired — removing access keys", {
                 id: dak.id,
                 name: dak.name,
+                fixedExpiryDate,
+                validityExpiryDate,
                 expiryDate
             });
 

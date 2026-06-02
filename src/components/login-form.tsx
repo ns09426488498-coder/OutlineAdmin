@@ -5,13 +5,15 @@ import { Button, Input } from "@heroui/react";
 
 import { checkPassword, login } from "@/src/core/actions";
 import { Logo } from "@/src/components/icons";
+import { useLanguage } from "@/src/components/language-provider";
 
 interface FormProps {
     password: string;
 }
 
-export default function 登录Form() {
+export default function LoginForm() {
     const form = useForm<FormProps>();
+    const { t } = useLanguage();
 
     const actualSubmit = async (data: FormProps) => {
         const userId = await checkPassword(data.password);
@@ -19,7 +21,7 @@ export default function 登录Form() {
         if (userId) {
             await login(userId);
         } else {
-            form.setError("password", { type: "custom", message: "密码错误。" });
+            form.setError("password", { type: "custom", message: t("passwordError") });
         }
     };
 
@@ -37,8 +39,8 @@ export default function 登录Form() {
                 color="primary"
                 errorMessage={form.formState.errors.password?.message}
                 isInvalid={!!form.formState.errors.password}
-                label="密码"
-                placeholder="密码错误。"
+                label={t("password")}
+                placeholder={t("passwordPlaceholder")}
                 type="password"
                 variant="underlined"
                 {...form.register("password", {
@@ -54,7 +56,7 @@ export default function 登录Form() {
                 type="submit"
                 variant="shadow"
             >
-                登录
+                {t("login")}
             </Button>
         </form>
     );

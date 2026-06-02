@@ -32,6 +32,7 @@ import { app, PAGE_SIZE } from "@/src/core/config";
 import DynamicAccessKeyValidityChip from "@/src/components/dynamic-access-key-validity-chip";
 import DynamicAccessKeysSslWarning from "@/src/components/dynamic-access-keys-ssl-warning";
 import DynamicAccessKeyDataUsageChip from "@/src/components/dynamic-access-key-data-usage-chip";
+import { useLanguage } from "@/src/components/language-provider";
 
 interface SearchFormProps {
     term: string;
@@ -45,6 +46,7 @@ export default function DynamicAccessKeysList() {
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [sortField, setSortField] = useState<DynamicAccessKeySortField>("id");
     const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+    const { t } = useLanguage();
 
     const totalPage = Math.ceil(totalItems / PAGE_SIZE);
 
@@ -136,38 +138,38 @@ export default function DynamicAccessKeysList() {
             <ConfirmModal
                 body={
                     <div className="grid gap-2">
-                        <span>确定要删除这个动态访问密钥吗？</span>
+                        <span>{t("deleteDynamicAccessKeyConfirm")}</span>
                         <p className="text-foreground-500 text-sm whitespace-pre-wrap break-all">
                             {getCurrentAccessKeyUrl()}
                         </p>
                     </div>
                 }
-                confirmLabel="删除"
+                confirmLabel={t("delete")}
                 disclosure={deleteConfirmModalDisclosure}
-                title="删除动态访问密钥"
+                title={t("deleteDynamicAccessKey")}
                 onConfirm={handleDelete}
             />
 
             <ConfirmModal
                 body={
                     <div className="grid gap-2">
-                        <span>确定要重置这个动态访问密钥吗？</span>
+                        <span>{t("resetDynamicAccessKeyConfirm")}</span>
                         <p className="text-foreground-500 text-sm whitespace-pre-wrap break-all">
-                            这个操作会将已用流量清零。自主管理密钥会在下次订阅请求时删除并重新创建。
+                            {t("resetDynamicAccessKeyNote")}
                         </p>
                     </div>
                 }
-                confirmLabel="重置"
+                confirmLabel={t("reset")}
                 disclosure={resetConfirmModalDisclosure}
-                title="重置动态访问密钥"
+                title={t("resetDynamicAccessKey")}
                 onConfirm={handleReset}
             />
 
             <div className="grid gap-4">
                 <div className="flex gap-2 items-center">
-                    <h1 className="text-xl">动态访问密钥</h1>
+                    <h1 className="text-xl">{t("dynamicAccessKeys")}</h1>
 
-                    <Tooltip content="了解动态访问密钥">
+                    <Tooltip content={t("dynamicAccessKeysHelp")}>
                         <Link href={app.links.outlineVpn.dynamicAccessKeys} target="_blank">
                             <InfoIcon size={20} />
                         </Link>
@@ -180,7 +182,7 @@ export default function DynamicAccessKeysList() {
                     <form onSubmit={searchForm.handleSubmit(handleSearch)}>
                         <Input
                             className="w-fit"
-                            placeholder="名称 [+回车]"
+                            placeholder={t("nameSearchPlaceholder")}
                             startContent={<>🔍</>}
                             variant="faded"
                             {...searchForm.register("term")}
@@ -194,21 +196,21 @@ export default function DynamicAccessKeysList() {
                                 isDisabled={isLoading}
                                 onPress={() => handleSortFieldChange("name")}
                             >
-                                密钥名称
+                                {t("keyName")}
                             </Button>
                             <Button
                                 color={sortField === "remainingData" ? "primary" : "default"}
                                 isDisabled={isLoading}
                                 onPress={() => handleSortFieldChange("remainingData")}
                             >
-                                剩余流量
+                                {t("remainingData")}
                             </Button>
                             <Button
                                 color={sortField === "expiresAt" ? "primary" : "default"}
                                 isDisabled={isLoading}
                                 onPress={() => handleSortFieldChange("expiresAt")}
                             >
-                                到期时间
+                                {t("expiresAt")}
                             </Button>
                         </ButtonGroup>
 
@@ -218,14 +220,14 @@ export default function DynamicAccessKeysList() {
                                 isDisabled={isLoading}
                                 onPress={() => handleSortDirectionChange("asc")}
                             >
-                                升序
+                                {t("sortAscending")}
                             </Button>
                             <Button
                                 color={sortDirection === "desc" ? "primary" : "default"}
                                 isDisabled={isLoading}
                                 onPress={() => handleSortDirectionChange("desc")}
                             >
-                                降序
+                                {t("descending")}
                             </Button>
                         </ButtonGroup>
                     </div>
@@ -237,7 +239,7 @@ export default function DynamicAccessKeysList() {
                         startContent={<PlusIcon size={20} />}
                         variant="shadow"
                     >
-                        新建
+                        {t("create")}
                     </Button>
                 </div>
 
@@ -254,32 +256,32 @@ export default function DynamicAccessKeysList() {
                             </CardHeader>
                             <CardBody className="text-sm grid gap-2">
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>ID</span>
+                                    <span>{t("id")}</span>
                                     <Chip radius="sm" size="sm" variant="flat">
                                         {item.id}
                                     </Chip>
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>管理方式</span>
+                                    <span>{t("managementType")}</span>
                                     {item.isSelfManaged ? (
                                         <Chip color="secondary" radius="sm" size="sm" variant="flat">
-                                            自主管理
+                                            {t("selfManaged")}
                                         </Chip>
                                     ) : (
                                         <Chip color="default" radius="sm" size="sm" variant="flat">
-                                            手动
+                                            {t("manual")}
                                         </Chip>
                                     )}
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>已用流量</span>
+                                    <span>{t("usedData")}</span>
                                     <DynamicAccessKeyDataUsageChip item={item} />
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>密钥数量</span>
+                                    <span>{t("keyCount")}</span>
                                     <Chip
                                         color="default"
                                         radius="sm"
@@ -287,31 +289,31 @@ export default function DynamicAccessKeysList() {
                                         startContent={item.isSelfManaged && <SelfManagedKeyIcon size={18} />}
                                         variant="flat"
                                     >
-                                        {item.isSelfManaged ? <span>自动</span> : item._count?.accessKeys}
+                                        {item.isSelfManaged ? <span>{t("selfManaged")}</span> : item._count?.accessKeys}
                                     </Chip>
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>负载均衡</span>
+                                    <span>{t("loadBalancer")}</span>
                                     <Chip color="default" radius="sm" size="sm" variant="flat">
                                         {item.loadBalancerAlgorithm}
                                     </Chip>
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>前缀</span>
+                                    <span>{t("prefix")}</span>
                                     <Chip
                                         color={item.prefix ? "success" : "default"}
                                         radius="sm"
                                         size="sm"
                                         variant="flat"
                                     >
-                                        {item.prefix ? item.prefix : "无"}
+                                        {item.prefix ? item.prefix : t("none")}
                                     </Chip>
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>有效期</span>
+                                    <span>{t("validity")}</span>
                                     <DynamicAccessKeyValidityChip dak={item} />
                                 </div>
                             </CardBody>
@@ -323,7 +325,7 @@ export default function DynamicAccessKeysList() {
                                             dynamicAccessKeyModalDisclosure.onOpen();
                                         }}
                                     >
-                                        分享
+                                        {t("share")}
                                     </Button>
 
                                     {item.isSelfManaged ? (
@@ -333,16 +335,16 @@ export default function DynamicAccessKeysList() {
                                                 resetConfirmModalDisclosure.onOpen();
                                             }}
                                         >
-                                            重置
+                                            {t("reset")}
                                         </Button>
                                     ) : (
                                         <Button as={Link} href={`/dynamic-access-keys/${item.id}/access-keys`}>
-                                            访问密钥
+                                            {t("accessKeys")}
                                         </Button>
                                     )}
 
                                     <Button as={Link} href={`/dynamic-access-keys/${item.id}/edit`}>
-                                        编辑
+                                        {t("edit")}
                                     </Button>
 
                                     <Button
@@ -352,7 +354,7 @@ export default function DynamicAccessKeysList() {
                                             deleteConfirmModalDisclosure.onOpen();
                                         }}
                                     >
-                                        删除
+                                        {t("delete")}
                                     </Button>
                                 </ButtonGroup>
                             </CardFooter>
