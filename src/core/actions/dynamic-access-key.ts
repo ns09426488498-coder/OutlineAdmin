@@ -23,6 +23,23 @@ type DynamicAccessKeyFilters = {
     take?: number;
     sortField?: DynamicAccessKeySortField;
     sortDirection?: SortDirection;
+    tagId?: string | null;
+};
+
+const getDynamicAccessKeyTagIds = (dak: DynamicAccessKey): string[] => {
+    if (!dak.isSelfManaged || dak.serverPoolType !== "tag" || !dak.serverPoolValue) return [];
+
+    try {
+        return JSON.parse(dak.serverPoolValue).map(String);
+    } catch {
+        return [];
+    }
+};
+
+const isDynamicAccessKeyInTag = (dak: DynamicAccessKey, tagId?: string | null): boolean => {
+    if (!tagId) return true;
+
+    return getDynamicAccessKeyTagIds(dak).includes(String(tagId));
 };
 
 const getDynamicAccessKeyExpiryTime = (dak: DynamicAccessKey): number => {
@@ -53,15 +70,7 @@ const withServerPoolTags = async (
     const tagNamesById = new Map(tags.map((tag) => [String(tag.id), tag.name]));
 
     return dynamicAccessKeys.map((dak) => {
-        let tagIds: string[] = [];
-
-        if (dak.isSelfManaged && dak.serverPoolType === "tag" && dak.serverPoolValue) {
-            try {
-                tagIds = JSON.parse(dak.serverPoolValue).map(String);
-            } catch {
-                tagIds = [];
-            }
-        }
+        const tagIds = getDynamicAccessKeyTagIds(dak);
 
         return {
             ...dak,
@@ -74,7 +83,7 @@ export async function getDynamicAccessKeys(
     filters?: DynamicAccessKeyFilters,
     withKeysCount: boolean = false
 ): Promise<DynamicAccessKeyWithAccessKeysCountAndPoolTags[]> {
-    const { skip = 0, take = PAGE_SIZE, term, sortField = "id", sortDirection = "desc" } = filters || {};
+    const { skip = 0, take = PAGE_SIZE, term, sortField = "id", sortDirection = "desc", tagId } = filters || {};
     const where: Prisma.DynamicAccessKeyWhereInput = {
         OR: term ? [{ name: { contains: term } }] : undefined
     };
@@ -82,13 +91,14 @@ export async function getDynamicAccessKeys(
         _count: withKeysCount ? { select: { accessKeys: true } } : undefined
     };
 
-    if (sortField === "expiresAt" || sortField === "remainingData") {
+    if (tagId || sortField === "expiresAt" || sortField === "remainingData") {
         const data = await prisma.dynamicAccessKey.findMany({
             where,
             include
         });
 
         const sortedData = data
+            .filter((item) => isDynamicAccessKeyInTag(item, tagId))
             .sort((a, b) => {
                 let result: number;
 
@@ -105,11 +115,17 @@ export async function getDynamicAccessKeys(
                     } else {
                         result = aRemaining < bRemaining ? -1 : aRemaining > bRemaining ? 1 : 0;
                     }
+                } else if (sortField === "name") {
+                    result = a.name.localeCompare(b.name);
+                } else if (sortField === "id") {
+                    result = a.id - b.id;
                 } else {
                     result = getDynamicAccessKeyExpiryTime(a) - getDynamicAccessKeyExpiryTime(b);
                 }
 
-                return sortDirection === "asc" ? result : -result;
+                const primarySortResult = sortDirection === "asc" ? result : -result;
+
+                return primarySortResult || b.id - a.id;
             })
             .slice(skip, skip + take);
 
@@ -129,8 +145,18 @@ export async function getDynamicAccessKeys(
     return withServerPoolTags(data);
 }
 
-export async function getDynamicAccessKeysCount(filters?: { term?: string }): Promise<number> {
-    const { term } = filters || {};
+export async function getDynamicAccessKeysCount(filters?: { term?: string; tagId?: string | null }): Promise<number> {
+    const { term, tagId } = filters || {};
+
+    if (tagId) {
+        const data = await prisma.dynamicAccessKey.findMany({
+            where: {
+                OR: term ? [{ name: { contains: term } }] : undefined
+            }
+        });
+
+        return data.filter((item) => isDynamicAccessKeyInTag(item, tagId)).length;
+    }
 
     return prisma.dynamicAccessKey.count({
         where: {

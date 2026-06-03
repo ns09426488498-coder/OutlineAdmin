@@ -8,6 +8,10 @@ import {
     CardFooter,
     CardHeader,
     Chip,
+    Dropdown,
+    DropdownItem,
+    DropdownMenu,
+    DropdownTrigger,
     Input,
     Pagination,
     Tooltip,
@@ -15,7 +19,7 @@ import {
 } from "@heroui/react";
 import React, { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { DynamicAccessKey } from "@prisma/client";
+import { DynamicAccessKey, Tag } from "@prisma/client";
 import { Link } from "@heroui/link";
 
 import ConfirmModal from "@/src/components/modals/confirm-modal";
@@ -31,6 +35,7 @@ import {
     removeDynamicAccessKey,
     resetDynamicAccessKeyUsage
 } from "@/src/core/actions/dynamic-access-key";
+import { getTags } from "@/src/core/actions/tags";
 import DynamicAccessKeyModal from "@/src/components/modals/dynamic-access-key-modal";
 import { app, PAGE_SIZE } from "@/src/core/config";
 import DynamicAccessKeyValidityChip from "@/src/components/dynamic-access-key-validity-chip";
@@ -50,9 +55,20 @@ export default function DynamicAccessKeysList() {
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [sortField, setSortField] = useState<DynamicAccessKeySortField>("id");
     const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-    const { t } = useLanguage();
+    const [tags, setTags] = useState<Tag[]>([]);
+    const [selectedTagId, setSelectedTagId] = useState<string>("");
+    const { language, t } = useLanguage();
 
     const totalPage = Math.ceil(totalItems / PAGE_SIZE);
+    const selectedTagLabel = selectedTagId
+        ? (tags.find((tag) => String(tag.id) === selectedTagId)?.name ?? selectedTagId)
+        : language === "zh"
+          ? "全部标签"
+          : "All Tags";
+    const tagFilterItems = [
+        { id: "all", name: selectedTagId ? (language === "zh" ? "全部标签" : "All Tags") : selectedTagLabel },
+        ...tags.map((tag) => ({ id: String(tag.id), name: tag.name }))
+    ];
 
     const deleteConfirmModalDisclosure = useDisclosure();
     const resetConfirmModalDisclosure = useDisclosure();
@@ -63,7 +79,8 @@ export default function DynamicAccessKeysList() {
         const params = {
             term: data.term,
             sortField,
-            sortDirection
+            sortDirection,
+            tagId: selectedTagId || undefined
         };
 
         const filteredServers = await getDynamicAccessKeys(params, true);
@@ -102,7 +119,8 @@ export default function DynamicAccessKeysList() {
             skip: (page - 1) * PAGE_SIZE,
             term: searchForm.getValues("term"),
             sortField,
-            sortDirection
+            sortDirection,
+            tagId: selectedTagId || undefined
         };
 
         setIsLoading(true);
@@ -118,11 +136,15 @@ export default function DynamicAccessKeysList() {
         } finally {
             setIsLoading(false);
         }
-    }, [page, searchForm, sortDirection, sortField]);
+    }, [page, searchForm, selectedTagId, sortDirection, sortField]);
 
     useEffect(() => {
         updateData();
     }, [updateData]);
+
+    useEffect(() => {
+        getTags().then(setTags);
+    }, []);
 
     const handleSortFieldChange = (value: DynamicAccessKeySortField) => {
         if (value === sortField) {
@@ -228,6 +250,28 @@ export default function DynamicAccessKeysList() {
                                 {getSortLabel("expiresAt", t("expiresAt"))}
                             </Button>
                         </ButtonGroup>
+
+                        <Dropdown>
+                            <DropdownTrigger>
+                                <Button className="shrink-0 px-3" isDisabled={isLoading} variant="flat">
+                                    {selectedTagLabel}
+                                </Button>
+                            </DropdownTrigger>
+                            <DropdownMenu
+                                aria-label={language === "zh" ? "按标签筛选" : "Filter by tag"}
+                                items={tagFilterItems}
+                                selectedKeys={new Set([selectedTagId || "all"])}
+                                selectionMode="single"
+                                onSelectionChange={(keys) => {
+                                    const key = Array.from(keys)[0]?.toString() ?? "all";
+
+                                    setPage(1);
+                                    setSelectedTagId(key === "all" ? "" : key);
+                                }}
+                            >
+                                {(item) => <DropdownItem key={item.id}>{item.name}</DropdownItem>}
+                            </DropdownMenu>
+                        </Dropdown>
 
                         <Button
                             as={Link}
