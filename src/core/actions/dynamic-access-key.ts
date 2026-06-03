@@ -13,7 +13,7 @@ import {
     NewDynamicAccessKeyRequest,
     SortDirection
 } from "@/src/core/definitions";
-import { PAGE_SIZE } from "@/src/core/config";
+import { BYTES_TO_MB_RATE, PAGE_SIZE } from "@/src/core/config";
 import { removeAccessKey } from "@/src/core/actions/access-key";
 
 type DynamicAccessKeyFilters = {
@@ -37,7 +37,7 @@ const getDynamicAccessKeyExpiryTime = (dak: DynamicAccessKey): number => {
 const getDynamicAccessKeyRemainingData = (dak: DynamicAccessKey): bigint | null => {
     if (dak.dataLimit === null) return null;
 
-    return dak.dataLimit - dak.dataUsage;
+    return dak.dataLimit * BigInt(BYTES_TO_MB_RATE) - dak.dataUsage;
 };
 
 export async function getDynamicAccessKeys(

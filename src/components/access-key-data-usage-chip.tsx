@@ -5,14 +5,14 @@ import { AccessKey } from "@prisma/client";
 import { InfinityIcon } from "@/src/components/icons";
 import { convertDataLimitToUnit, formatBytes } from "@/src/core/utils";
 import { DataLimitUnit } from "@/src/core/definitions";
+import { BYTES_TO_MB_RATE } from "@/src/core/config";
 
 interface Props {
     item: AccessKey;
 }
 
 export default function AccessKeyDataUsageChip({ item }: Props) {
-    const bytesPerMB = 1024 * 1024;
-    const dataLimitInBytes = Number(item.dataLimit) * bytesPerMB;
+    const dataLimitInBytes = Number(item.dataLimit) * BYTES_TO_MB_RATE;
     const isExceeded = item.dataLimit && item.dataUsage >= dataLimitInBytes;
 
     return (

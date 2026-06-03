@@ -49,6 +49,11 @@ interface Props {
     dynamicAccessKey?: DynamicAccessKey | null;
 }
 
+const DATA_LIMIT_GB_TO_STORED_MB = 1000;
+const MAX_DATA_LIMIT_FOR_DYNAMIC_ACCESS_KEYS_GB = Math.floor(
+    MAX_DATA_LIMIT_FOR_ACCESS_KEYS / DATA_LIMIT_GB_TO_STORED_MB
+);
+
 export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }: Props) {
     const router = useRouter();
     const form = useForm<NewDynamicAccessKeyRequest | EditDynamicAccessKeyRequest>({
@@ -65,7 +70,9 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
                       ? JSON.parse(dynamicAccessKey.serverPoolValue)
                       : null,
                   validityPeriod: dynamicAccessKey.validityPeriod ? dynamicAccessKey.validityPeriod : null,
-                  dataLimit: dynamicAccessKey.dataLimit ? Number(dynamicAccessKey.dataLimit) : undefined
+                  dataLimit: dynamicAccessKey.dataLimit
+                      ? Number(dynamicAccessKey.dataLimit) / DATA_LIMIT_GB_TO_STORED_MB
+                      : undefined
               }
             : {
                   name: "",
@@ -92,6 +99,8 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
         setErrorMessage(() => "");
 
         try {
+            data.dataLimit = data.dataLimit ? Math.round(Number(data.dataLimit) * DATA_LIMIT_GB_TO_STORED_MB) : null;
+
             if (data.isSelfManaged) {
                 if (Array.isArray(data.serverPoolValue)) {
                     data.serverPoolValue = JSON.stringify(data.serverPoolValue);
@@ -389,7 +398,7 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
                             <Divider />
 
                             <Input
-                                endContent={<span>MB</span>}
+                                endContent={<span>GB</span>}
                                 errorMessage={form.formState.errors.dataLimit?.message}
                                 isInvalid={!!form.formState.errors.dataLimit}
                                 label="流量上限"
@@ -400,10 +409,10 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
                                     required: false,
                                     min: 1,
                                     max: {
-                                        value: MAX_DATA_LIMIT_FOR_ACCESS_KEYS,
-                                        message: `数值不能超过 ${MAX_DATA_LIMIT_FOR_ACCESS_KEYS}`
+                                        value: MAX_DATA_LIMIT_FOR_DYNAMIC_ACCESS_KEYS_GB,
+                                        message: `数值不能超过 ${MAX_DATA_LIMIT_FOR_DYNAMIC_ACCESS_KEYS_GB}`
                                     },
-                                    setValueAs: (v) => parseInt(v)
+                                    setValueAs: (v) => (v === "" || v === null ? null : Number(v))
                                 })}
                             />
 

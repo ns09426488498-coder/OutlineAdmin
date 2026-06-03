@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 import { createPageTitle } from "@/src/core/utils";
-import { getTags } from "@/src/core/actions/tags";
+import { getTagLoadStats, getTags } from "@/src/core/actions/tags";
 import TagsList from "@/src/components/tags-list";
 
 export const metadata: Metadata = {
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TagsPage() {
-    const tags = await getTags({});
+    const [tags, loadStats] = await Promise.all([getTags({}), getTagLoadStats()]);
 
-    return <TagsList data={tags} />;
+    return <TagsList data={tags} loadStats={loadStats} />;
 }

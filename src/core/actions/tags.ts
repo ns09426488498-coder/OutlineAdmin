@@ -5,6 +5,72 @@ import { Tag } from "@prisma/client";
 
 import prisma from "@/prisma/db";
 
+export interface TagLoadStat {
+    id: number;
+    name: string;
+    dynamicAccessKeyCount: number;
+    serverCount: number;
+    averageKeysPerServer: number | null;
+    todayUsage: number;
+    yesterdayUsage: number;
+}
+
+const startOfDay = (date: Date): Date => {
+    const value = new Date(date);
+
+    value.setHours(0, 0, 0, 0);
+
+    return value;
+};
+
+const endOfDay = (date: Date): Date => {
+    const value = new Date(date);
+
+    value.setHours(23, 59, 59, 999);
+
+    return value;
+};
+
+const getSnapshotUsage = async (serverId: number, startDate: Date, endDate: Date): Promise<number> => {
+    const [baseline, snapshotsInRange] = await Promise.all([
+        prisma.serverTrafficSnapshot.findFirst({
+            where: {
+                serverId,
+                capturedAt: {
+                    lt: startDate
+                }
+            },
+            orderBy: {
+                capturedAt: "desc"
+            }
+        }),
+        prisma.serverTrafficSnapshot.findMany({
+            where: {
+                serverId,
+                capturedAt: {
+                    gte: startDate,
+                    lte: endDate
+                }
+            },
+            orderBy: {
+                capturedAt: "asc"
+            }
+        })
+    ]);
+    const snapshots = baseline ? [baseline, ...snapshotsInRange] : snapshotsInRange;
+
+    if (snapshots.length < 2) return 0;
+
+    const usage = snapshots.slice(1).reduce((total, snapshot, index) => {
+        const previous = snapshots[index];
+        const diff = snapshot.totalDataUsage - previous.totalDataUsage;
+
+        return diff > BigInt(0) ? total + diff : total;
+    }, BigInt(0));
+
+    return Number(usage);
+};
+
 export async function createTag(data: any): Promise<void> {
     await prisma.tag.create({ data });
 
@@ -32,6 +98,87 @@ export async function getTagsCount(filters?: { term?: string }): Promise<number>
     }
 
     return prisma.tag.count();
+}
+
+export async function getTagLoadStats(): Promise<TagLoadStat[]> {
+    const now = new Date();
+    const yesterday = new Date(now);
+
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const todayRange = {
+        startDate: startOfDay(now),
+        endDate: now
+    };
+    const yesterdayRange = {
+        startDate: startOfDay(yesterday),
+        endDate: endOfDay(yesterday)
+    };
+    const [tags, dynamicAccessKeys] = await Promise.all([
+        prisma.tag.findMany({
+            include: {
+                serverTags: {
+                    select: {
+                        serverId: true
+                    }
+                }
+            },
+            orderBy: {
+                name: "asc"
+            }
+        }),
+        prisma.dynamicAccessKey.findMany({
+            where: {
+                isSelfManaged: true,
+                serverPoolType: "tag",
+                serverPoolValue: {
+                    not: null
+                }
+            },
+            select: {
+                id: true,
+                serverPoolValue: true
+            }
+        })
+    ]);
+
+    const stats = await Promise.all(
+        tags.map(async (tag) => {
+            const dynamicAccessKeyCount = dynamicAccessKeys.filter((item) => {
+                try {
+                    return JSON.parse(item.serverPoolValue ?? "[]")
+                        .map(String)
+                        .includes(String(tag.id));
+                } catch {
+                    return false;
+                }
+            }).length;
+            const serverIds = tag.serverTags.map((item) => item.serverId);
+            const [todayUsages, yesterdayUsages] = await Promise.all([
+                Promise.all(
+                    serverIds.map((serverId) => getSnapshotUsage(serverId, todayRange.startDate, todayRange.endDate))
+                ),
+                Promise.all(
+                    serverIds.map((serverId) =>
+                        getSnapshotUsage(serverId, yesterdayRange.startDate, yesterdayRange.endDate)
+                    )
+                )
+            ]);
+
+            return {
+                id: tag.id,
+                name: tag.name,
+                dynamicAccessKeyCount,
+                serverCount: serverIds.length,
+                averageKeysPerServer:
+                    serverIds.length > 0 ? Number((dynamicAccessKeyCount / serverIds.length).toFixed(1)) : null,
+                todayUsage: todayUsages.reduce((sum, value) => sum + value, 0),
+                yesterdayUsage: yesterdayUsages.reduce((sum, value) => sum + value, 0)
+            };
+        })
+    );
+
+    return stats.sort((a, b) => b.dynamicAccessKeyCount - a.dynamicAccessKeyCount || a.name.localeCompare(b.name));
 }
 
 export async function getTagById(id: number) {

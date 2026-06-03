@@ -2,6 +2,10 @@
 
 import {
     Button,
+    Card,
+    CardBody,
+    CardHeader,
+    Chip,
     Input,
     Link,
     Pagination,
@@ -23,23 +27,28 @@ import { PAGE_SIZE } from "@/src/core/config";
 import { DeleteIcon, EditIcon, PlusIcon } from "@/src/components/icons";
 import NoResult from "@/src/components/no-result";
 import ConfirmModal from "@/src/components/modals/confirm-modal";
-import { deleteTag, getTags, getTagsCount } from "@/src/core/actions/tags";
+import { deleteTag, getTags, getTagsCount, TagLoadStat } from "@/src/core/actions/tags";
+import { formatBytes } from "@/src/core/utils";
 
 interface Props {
     data: Tag[];
+    loadStats: TagLoadStat[];
 }
 
 interface SearchFormProps {
     term: string;
 }
 
-export default function TagsList({ data }: Props) {
+export default function TagsList({ data, loadStats }: Props) {
     const [tags, setTags] = useState<Tag[]>(data);
     const [page, setPage] = useState<number>(1);
     const [totalItems, setTotalItems] = useState<number>(1);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [tag, setTag] = useState<Tag>();
     const deleteConfirmModalDisclosure = useDisclosure();
+    const totalDynamicAccessKeys = loadStats.reduce((sum, item) => sum + item.dynamicAccessKeyCount, 0);
+    const loadedTagsCount = loadStats.filter((item) => item.dynamicAccessKeyCount > 0).length;
+    const totalYesterdayUsage = loadStats.reduce((sum, item) => sum + item.yesterdayUsage, 0);
 
     const handleDelete = async () => {
         if (!tag) return;
@@ -105,6 +114,91 @@ export default function TagsList({ data }: Props) {
             <div className="grid gap-4">
                 <section className="flex justify-start items-center gap-2">
                     <h1 className="text-xl">标签</h1>
+                </section>
+
+                <section className="grid gap-3">
+                    <div className="grid gap-3 md:grid-cols-3">
+                        <Card radius="sm">
+                            <CardBody className="gap-1">
+                                <span className="text-xs text-foreground-500">动态密钥总数</span>
+                                <span className="text-2xl font-semibold">{totalDynamicAccessKeys}</span>
+                            </CardBody>
+                        </Card>
+                        <Card radius="sm">
+                            <CardBody className="gap-1">
+                                <span className="text-xs text-foreground-500">有承载的标签</span>
+                                <span className="text-2xl font-semibold">
+                                    {loadedTagsCount}
+                                    <span className="text-sm font-normal text-foreground-500">
+                                        {" "}
+                                        / {loadStats.length}
+                                    </span>
+                                </span>
+                            </CardBody>
+                        </Card>
+                        <Card radius="sm">
+                            <CardBody className="gap-1">
+                                <span className="text-xs text-foreground-500">昨日标签流量</span>
+                                <span className="text-2xl font-semibold">{formatBytes(totalYesterdayUsage)}</span>
+                            </CardBody>
+                        </Card>
+                    </div>
+
+                    <Card radius="sm">
+                        <CardHeader className="flex items-center justify-between gap-3">
+                            <div>
+                                <h2 className="text-base font-semibold">标签承载排行</h2>
+                                <p className="text-xs text-foreground-500">
+                                    统计自主管理且服务器池类型为标签的动态密钥
+                                </p>
+                            </div>
+                        </CardHeader>
+                        <CardBody className="gap-2">
+                            {loadStats.length === 0 ? (
+                                <NoResult />
+                            ) : (
+                                loadStats.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        className="grid gap-3 rounded-md bg-default-100/60 p-3 dark:bg-content2 md:grid-cols-[minmax(120px,1fr)_auto_auto_auto_auto]"
+                                    >
+                                        <div className="min-w-0">
+                                            <div className="truncate text-sm font-medium">{item.name}</div>
+                                            <div className="text-xs text-foreground-400">ID {item.id}</div>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-3 md:grid md:justify-items-end">
+                                            <span className="text-xs text-foreground-500 md:hidden">动态密钥</span>
+                                            <Chip
+                                                color={item.dynamicAccessKeyCount > 0 ? "primary" : "default"}
+                                                size="sm"
+                                                variant="flat"
+                                            >
+                                                {item.dynamicAccessKeyCount} 个客户
+                                            </Chip>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-3 text-sm md:grid md:justify-items-end">
+                                            <span className="text-xs text-foreground-500 md:hidden">服务器</span>
+                                            <span>{item.serverCount} 台服务器</span>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-3 text-sm md:grid md:justify-items-end">
+                                            <span className="text-xs text-foreground-500 md:hidden">平均承载</span>
+                                            <span>
+                                                {item.averageKeysPerServer === null
+                                                    ? "-"
+                                                    : `${item.averageKeysPerServer} 客户/台`}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-3 text-sm md:grid md:justify-items-end">
+                                            <span className="text-xs text-foreground-500 md:hidden">昨日/今日流量</span>
+                                            <span>
+                                                {formatBytes(item.yesterdayUsage)} / {formatBytes(item.todayUsage)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </CardBody>
+                    </Card>
                 </section>
 
                 <div className="flex justify-between items-center gap-2">

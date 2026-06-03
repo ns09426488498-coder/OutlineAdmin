@@ -32,7 +32,7 @@ export interface TrafficDashboardData {
 }
 
 const getSnapshotUsage = async (serverId: number, startDate: Date, endDate: Date): Promise<number> => {
-    const [baseline, latest, firstInRange] = await Promise.all([
+    const [baseline, snapshotsInRange] = await Promise.all([
         prisma.serverTrafficSnapshot.findFirst({
             where: {
                 serverId,
@@ -44,18 +44,7 @@ const getSnapshotUsage = async (serverId: number, startDate: Date, endDate: Date
                 capturedAt: "desc"
             }
         }),
-        prisma.serverTrafficSnapshot.findFirst({
-            where: {
-                serverId,
-                capturedAt: {
-                    lte: endDate
-                }
-            },
-            orderBy: {
-                capturedAt: "desc"
-            }
-        }),
-        prisma.serverTrafficSnapshot.findFirst({
+        prisma.serverTrafficSnapshot.findMany({
             where: {
                 serverId,
                 capturedAt: {
@@ -68,13 +57,18 @@ const getSnapshotUsage = async (serverId: number, startDate: Date, endDate: Date
             }
         })
     ]);
+    const snapshots = baseline ? [baseline, ...snapshotsInRange] : snapshotsInRange;
 
-    if (!latest) return 0;
+    if (snapshots.length < 2) return 0;
 
-    const startValue = baseline?.totalDataUsage ?? firstInRange?.totalDataUsage ?? latest.totalDataUsage;
-    const usage = Number(latest.totalDataUsage - startValue);
+    const usage = snapshots.slice(1).reduce((total, snapshot, index) => {
+        const previous = snapshots[index];
+        const diff = snapshot.totalDataUsage - previous.totalDataUsage;
 
-    return Math.max(0, usage);
+        return diff > 0 ? total + diff : total;
+    }, BigInt(0));
+
+    return Number(usage);
 };
 
 const formatTrendLabel = (date: Date): string => {

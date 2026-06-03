@@ -5,6 +5,7 @@ import { createLogger } from "@/src/core/logger";
 import { LoggerContext } from "@/src/core/definitions";
 import { getDakExpiryDateBasedOnValidityPeriod } from "@/src/core/utils";
 import { removeSelfManagedDynamicAccessKeyAccessKeys } from "@/src/core/actions/dynamic-access-key";
+import { BYTES_TO_MB_RATE } from "@/src/core/config";
 
 let logger = createLogger(LoggerContext.DakJob);
 
@@ -49,8 +50,7 @@ const main = async () => {
         });
 
         const dataLimit = dak.dataLimit ? Number(dak.dataLimit) : 0;
-        const bytesPerMB = 1024 * 1024;
-        const dataLimitInBytes = dataLimit * bytesPerMB;
+        const dataLimitInBytes = dataLimit * BYTES_TO_MB_RATE;
         const dataUsage = accessKeys.reduce((acc, key) => acc + Number(key.dataUsage || 0), 0);
         const isDataUsageExceeded = dataLimit && dataUsage >= dataLimitInBytes;
 

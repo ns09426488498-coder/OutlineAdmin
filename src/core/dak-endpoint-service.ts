@@ -11,6 +11,7 @@ import {
 import { crc32 } from "@/src/core/utils";
 import { createAccessKey } from "@/src/core/actions/access-key";
 import { AccessKeyPrefixes } from "@/src/core/outline/access-key-prefix";
+import { BYTES_TO_MB_RATE } from "@/src/core/config";
 
 export class DakEndpointService {
     private readonly dak: DynamicAccessKeyWithAccessKeys;
@@ -37,8 +38,7 @@ export class DakEndpointService {
 
     private async handleSelfManaged() {
         const dataLimit = this.dak.dataLimit ? Number(this.dak.dataLimit) : 0;
-        const bytesPerMB = 1024 * 1024;
-        const dataLimitInBytes = dataLimit * bytesPerMB;
+        const dataLimitInBytes = dataLimit * BYTES_TO_MB_RATE;
 
         if (dataLimit > 0 && this.dak.dataUsage >= dataLimitInBytes)
             return this.error("The dynamic access key data usage limit exceeded");

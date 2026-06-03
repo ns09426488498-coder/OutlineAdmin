@@ -121,14 +121,20 @@ export default function DynamicAccessKeysList() {
     }, [updateData]);
 
     const handleSortFieldChange = (value: DynamicAccessKeySortField) => {
-        setSortField(value);
-        setSortDirection(value === "remainingData" ? "asc" : "desc");
+        if (value === sortField) {
+            setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+        } else {
+            setSortField(value);
+            setSortDirection("asc");
+        }
+
         setPage(1);
     };
 
-    const handleSortDirectionChange = (value: SortDirection) => {
-        setSortDirection(value);
-        setPage(1);
+    const getSortLabel = (field: DynamicAccessKeySortField, label: string) => {
+        if (field !== sortField) return label;
+
+        return `${label} ${sortDirection === "asc" ? "↑" : "↓"}`;
     };
 
     return (
@@ -166,81 +172,70 @@ export default function DynamicAccessKeysList() {
             />
 
             <div className="grid gap-4">
-                <div className="flex gap-2 items-center">
-                    <h1 className="text-xl">{t("dynamicAccessKeys")}</h1>
+                <div className="flex items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-2">
+                        <h1 className="text-xl">{t("dynamicAccessKeys")}</h1>
 
-                    <Tooltip content={t("dynamicAccessKeysHelp")}>
-                        <Link href={app.links.outlineVpn.dynamicAccessKeys} target="_blank">
-                            <InfoIcon size={20} />
-                        </Link>
-                    </Tooltip>
-                </div>
+                        <Tooltip content={t("dynamicAccessKeysHelp")}>
+                            <Link href={app.links.outlineVpn.dynamicAccessKeys} target="_blank">
+                                <InfoIcon size={20} />
+                            </Link>
+                        </Tooltip>
+                    </div>
 
-                <DynamicAccessKeysSslWarning />
-
-                <div className="flex flex-wrap justify-between items-center gap-2">
-                    <form onSubmit={searchForm.handleSubmit(handleSearch)}>
+                    <form className="min-w-0 flex-1 sm:max-w-[230px]" onSubmit={searchForm.handleSubmit(handleSearch)}>
                         <Input
-                            className="w-fit"
+                            className="w-full"
                             placeholder={t("nameSearchPlaceholder")}
                             startContent={<>🔍</>}
                             variant="faded"
                             {...searchForm.register("term")}
                         />
                     </form>
+                </div>
 
-                    <div className="flex flex-wrap gap-2">
-                        <ButtonGroup variant="flat">
+                <DynamicAccessKeysSslWarning />
+
+                <div className="overflow-x-auto pb-1">
+                    <div className="flex min-w-full w-max items-center gap-2">
+                        <ButtonGroup className="shrink-0" variant="flat">
                             <Button
+                                className="min-w-0 px-2 sm:px-3"
                                 color={sortField === "name" ? "primary" : "default"}
                                 isDisabled={isLoading}
                                 onPress={() => handleSortFieldChange("name")}
                             >
-                                {t("keyName")}
+                                {getSortLabel("name", t("keyName"))}
                             </Button>
                             <Button
+                                className="min-w-0 px-2 sm:px-3"
                                 color={sortField === "remainingData" ? "primary" : "default"}
                                 isDisabled={isLoading}
                                 onPress={() => handleSortFieldChange("remainingData")}
                             >
-                                {t("remainingData")}
+                                {getSortLabel("remainingData", t("remainingData"))}
                             </Button>
                             <Button
+                                className="min-w-0 px-2 sm:px-3"
                                 color={sortField === "expiresAt" ? "primary" : "default"}
                                 isDisabled={isLoading}
                                 onPress={() => handleSortFieldChange("expiresAt")}
                             >
-                                {t("expiresAt")}
+                                {getSortLabel("expiresAt", t("expiresAt"))}
                             </Button>
                         </ButtonGroup>
 
-                        <ButtonGroup variant="flat">
-                            <Button
-                                color={sortDirection === "asc" ? "primary" : "default"}
-                                isDisabled={isLoading}
-                                onPress={() => handleSortDirectionChange("asc")}
-                            >
-                                {t("sortAscending")}
-                            </Button>
-                            <Button
-                                color={sortDirection === "desc" ? "primary" : "default"}
-                                isDisabled={isLoading}
-                                onPress={() => handleSortDirectionChange("desc")}
-                            >
-                                {t("descending")}
-                            </Button>
-                        </ButtonGroup>
+                        <Button
+                            as={Link}
+                            className="shrink-0 px-3"
+                            color="primary"
+                            href="/dynamic-access-keys/create"
+                            startContent={<PlusIcon size={20} />}
+                            variant="shadow"
+                        >
+                            {t("create")}
+                        </Button>
                     </div>
-
-                    <Button
-                        as={Link}
-                        color="primary"
-                        href="/dynamic-access-keys/create"
-                        startContent={<PlusIcon size={20} />}
-                        variant="shadow"
-                    >
-                        {t("create")}
-                    </Button>
                 </div>
 
                 <div className="flex flex-wrap justify-center gap-4">
