@@ -8,6 +8,7 @@ import {
     DynamicAccessKeySortField,
     DynamicAccessKeyStats,
     DynamicAccessKeyWithAccessKeys,
+    DynamicAccessKeyWithAccessKeysCountAndPoolTags,
     DynamicAccessKeyWithAccessKeysCount,
     EditDynamicAccessKeyRequest,
     NewDynamicAccessKeyRequest,
@@ -40,10 +41,39 @@ const getDynamicAccessKeyRemainingData = (dak: DynamicAccessKey): bigint | null 
     return dak.dataLimit * BigInt(BYTES_TO_MB_RATE) - dak.dataUsage;
 };
 
+const withServerPoolTags = async (
+    dynamicAccessKeys: DynamicAccessKeyWithAccessKeysCount[]
+): Promise<DynamicAccessKeyWithAccessKeysCountAndPoolTags[]> => {
+    const tags = await prisma.tag.findMany({
+        select: {
+            id: true,
+            name: true
+        }
+    });
+    const tagNamesById = new Map(tags.map((tag) => [String(tag.id), tag.name]));
+
+    return dynamicAccessKeys.map((dak) => {
+        let tagIds: string[] = [];
+
+        if (dak.isSelfManaged && dak.serverPoolType === "tag" && dak.serverPoolValue) {
+            try {
+                tagIds = JSON.parse(dak.serverPoolValue).map(String);
+            } catch {
+                tagIds = [];
+            }
+        }
+
+        return {
+            ...dak,
+            serverPoolTags: tagIds.map((id) => tagNamesById.get(id)).filter(Boolean) as string[]
+        };
+    });
+};
+
 export async function getDynamicAccessKeys(
     filters?: DynamicAccessKeyFilters,
     withKeysCount: boolean = false
-): Promise<DynamicAccessKeyWithAccessKeysCount[]> {
+): Promise<DynamicAccessKeyWithAccessKeysCountAndPoolTags[]> {
     const { skip = 0, take = PAGE_SIZE, term, sortField = "id", sortDirection = "desc" } = filters || {};
     const where: Prisma.DynamicAccessKeyWhereInput = {
         OR: term ? [{ name: { contains: term } }] : undefined
@@ -58,7 +88,7 @@ export async function getDynamicAccessKeys(
             include
         });
 
-        return data
+        const sortedData = data
             .sort((a, b) => {
                 let result: number;
 
@@ -82,17 +112,21 @@ export async function getDynamicAccessKeys(
                 return sortDirection === "asc" ? result : -result;
             })
             .slice(skip, skip + take);
+
+        return withServerPoolTags(sortedData);
     }
 
     const orderBy: Prisma.DynamicAccessKeyOrderByWithRelationInput[] = [{ [sortField]: sortDirection }, { id: "desc" }];
 
-    return prisma.dynamicAccessKey.findMany({
+    const data = await prisma.dynamicAccessKey.findMany({
         where,
         skip,
         take,
         orderBy,
         include
     });
+
+    return withServerPoolTags(data);
 }
 
 export async function getDynamicAccessKeysCount(filters?: { term?: string }): Promise<number> {

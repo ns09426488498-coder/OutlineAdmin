@@ -4,12 +4,9 @@ import {
     Button,
     Card,
     CardBody,
-    CardHeader,
     Chip,
     Input,
     Link,
-    Pagination,
-    Spinner,
     Table,
     TableBody,
     TableCell,
@@ -19,15 +16,14 @@ import {
     Tooltip,
     useDisclosure
 } from "@heroui/react";
-import React, { useEffect, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Tag } from "@prisma/client";
 
-import { PAGE_SIZE } from "@/src/core/config";
 import { DeleteIcon, EditIcon, PlusIcon } from "@/src/components/icons";
 import NoResult from "@/src/components/no-result";
 import ConfirmModal from "@/src/components/modals/confirm-modal";
-import { deleteTag, getTags, getTagsCount, TagLoadStat } from "@/src/core/actions/tags";
+import { deleteTag, getTags, TagLoadStat } from "@/src/core/actions/tags";
 import { formatBytes } from "@/src/core/utils";
 
 interface Props {
@@ -39,16 +35,39 @@ interface SearchFormProps {
     term: string;
 }
 
+type TagTableSortField = "id" | "name" | "dynamicAccessKeyCount" | "serverCount" | "yesterdayUsage" | "todayUsage";
+type SortDirection = "asc" | "desc";
+
 export default function TagsList({ data, loadStats }: Props) {
     const [tags, setTags] = useState<Tag[]>(data);
-    const [page, setPage] = useState<number>(1);
-    const [totalItems, setTotalItems] = useState<number>(1);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const [tag, setTag] = useState<Tag>();
+    const [sortField, setSortField] = useState<TagTableSortField>("dynamicAccessKeyCount");
+    const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
     const deleteConfirmModalDisclosure = useDisclosure();
     const totalDynamicAccessKeys = loadStats.reduce((sum, item) => sum + item.dynamicAccessKeyCount, 0);
     const loadedTagsCount = loadStats.filter((item) => item.dynamicAccessKeyCount > 0).length;
     const totalYesterdayUsage = loadStats.reduce((sum, item) => sum + item.yesterdayUsage, 0);
+    const loadStatsByTagId = useMemo(() => {
+        return new Map(loadStats.map((item) => [item.id, item]));
+    }, [loadStats]);
+    const sortedTags = useMemo(() => {
+        return [...tags].sort((a, b) => {
+            const aStats = loadStatsByTagId.get(a.id);
+            const bStats = loadStatsByTagId.get(b.id);
+            let result: number;
+
+            if (sortField === "name") {
+                result = a.name.localeCompare(b.name);
+            } else if (sortField === "id") {
+                result = a.id - b.id;
+            } else {
+                result = (aStats?.[sortField] ?? 0) - (bStats?.[sortField] ?? 0);
+            }
+
+            return sortDirection === "asc" ? result : -result;
+        });
+    }, [loadStatsByTagId, sortDirection, sortField, tags]);
 
     const handleDelete = async () => {
         if (!tag) return;
@@ -57,8 +76,6 @@ export default function TagsList({ data, loadStats }: Props) {
         await updateData();
     };
 
-    const totalPage = Math.ceil(totalItems / PAGE_SIZE);
-
     const searchForm = useForm<SearchFormProps>();
     const handleSearch = async (data: SearchFormProps) => {
         const params = {
@@ -66,15 +83,12 @@ export default function TagsList({ data, loadStats }: Props) {
         };
 
         const filteredServers = await getTags(params);
-        const total = await getTagsCount(params);
 
-        setTotalItems(total);
         setTags(filteredServers);
-        setPage(1);
     };
 
     const updateData = async () => {
-        const params = { skip: (page - 1) * PAGE_SIZE, term: searchForm.getValues("term") };
+        const params = { term: searchForm.getValues("term") };
 
         setIsLoading(true);
 
@@ -82,18 +96,31 @@ export default function TagsList({ data, loadStats }: Props) {
             const data = await getTags(params);
 
             setTags(data);
-
-            const count = await getTagsCount(params);
-
-            setTotalItems(count);
         } finally {
             setIsLoading(false);
         }
     };
 
-    useEffect(() => {
-        updateData();
-    }, [page]);
+    const handleSort = (field: TagTableSortField) => {
+        if (field === sortField) {
+            setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+        } else {
+            setSortField(field);
+            setSortDirection(field === "name" || field === "id" ? "asc" : "desc");
+        }
+    };
+
+    const renderSortHeader = (field: TagTableSortField, label: string) => (
+        <Button
+            className="h-auto min-w-0 p-0 text-xs font-semibold"
+            size="sm"
+            variant="light"
+            onPress={() => handleSort(field)}
+        >
+            {label}
+            {sortField === field ? (sortDirection === "asc" ? " ↑" : " ↓") : ""}
+        </Button>
+    );
 
     return (
         <>
@@ -143,62 +170,6 @@ export default function TagsList({ data, loadStats }: Props) {
                             </CardBody>
                         </Card>
                     </div>
-
-                    <Card radius="sm">
-                        <CardHeader className="flex items-center justify-between gap-3">
-                            <div>
-                                <h2 className="text-base font-semibold">标签承载排行</h2>
-                                <p className="text-xs text-foreground-500">
-                                    统计自主管理且服务器池类型为标签的动态密钥
-                                </p>
-                            </div>
-                        </CardHeader>
-                        <CardBody className="gap-2">
-                            {loadStats.length === 0 ? (
-                                <NoResult />
-                            ) : (
-                                loadStats.map((item) => (
-                                    <div
-                                        key={item.id}
-                                        className="grid gap-3 rounded-md bg-default-100/60 p-3 dark:bg-content2 md:grid-cols-[minmax(120px,1fr)_auto_auto_auto_auto]"
-                                    >
-                                        <div className="min-w-0">
-                                            <div className="truncate text-sm font-medium">{item.name}</div>
-                                            <div className="text-xs text-foreground-400">ID {item.id}</div>
-                                        </div>
-                                        <div className="flex items-center justify-between gap-3 md:grid md:justify-items-end">
-                                            <span className="text-xs text-foreground-500 md:hidden">动态密钥</span>
-                                            <Chip
-                                                color={item.dynamicAccessKeyCount > 0 ? "primary" : "default"}
-                                                size="sm"
-                                                variant="flat"
-                                            >
-                                                {item.dynamicAccessKeyCount} 个客户
-                                            </Chip>
-                                        </div>
-                                        <div className="flex items-center justify-between gap-3 text-sm md:grid md:justify-items-end">
-                                            <span className="text-xs text-foreground-500 md:hidden">服务器</span>
-                                            <span>{item.serverCount} 台服务器</span>
-                                        </div>
-                                        <div className="flex items-center justify-between gap-3 text-sm md:grid md:justify-items-end">
-                                            <span className="text-xs text-foreground-500 md:hidden">平均承载</span>
-                                            <span>
-                                                {item.averageKeysPerServer === null
-                                                    ? "-"
-                                                    : `${item.averageKeysPerServer} 客户/台`}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center justify-between gap-3 text-sm md:grid md:justify-items-end">
-                                            <span className="text-xs text-foreground-500 md:hidden">昨日/今日流量</span>
-                                            <span>
-                                                {formatBytes(item.yesterdayUsage)} / {formatBytes(item.todayUsage)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </CardBody>
-                    </Card>
                 </section>
 
                 <div className="flex justify-between items-center gap-2">
@@ -225,13 +196,6 @@ export default function TagsList({ data, loadStats }: Props) {
 
                 <Table
                     aria-label="标签列表"
-                    bottomContent={
-                        totalPage > 1 && (
-                            <div className="flex justify-center">
-                                <Pagination initialPage={page} total={totalPage} variant="light" onChange={setPage} />
-                            </div>
-                        )
-                    }
                     color="primary"
                     isCompact={false}
                     isHeaderSticky={true}
@@ -239,49 +203,81 @@ export default function TagsList({ data, loadStats }: Props) {
                     shadow="sm"
                 >
                     <TableHeader>
-                        <TableColumn>ID</TableColumn>
-                        <TableColumn>NAME</TableColumn>
-                        <TableColumn align="center">ACTIONS</TableColumn>
+                        <TableColumn>{renderSortHeader("id", "ID")}</TableColumn>
+                        <TableColumn>{renderSortHeader("name", "名称")}</TableColumn>
+                        <TableColumn>{renderSortHeader("dynamicAccessKeyCount", "动态密钥")}</TableColumn>
+                        <TableColumn>{renderSortHeader("serverCount", "服务器")}</TableColumn>
+                        <TableColumn>{renderSortHeader("yesterdayUsage", "昨日流量")}</TableColumn>
+                        <TableColumn>{renderSortHeader("todayUsage", "今日流量")}</TableColumn>
+                        <TableColumn align="center">操作</TableColumn>
                     </TableHeader>
-                    <TableBody emptyContent={<NoResult />} isLoading={isLoading} loadingContent={<Spinner />}>
-                        {tags.map((tag) => (
-                            <TableRow key={tag.id}>
-                                <TableCell>{tag.id}</TableCell>
-                                <TableCell>{tag.name}</TableCell>
+                    <TableBody emptyContent={<NoResult />} isLoading={isLoading}>
+                        {sortedTags.map((tag) => {
+                            const stats = loadStatsByTagId.get(tag.id);
 
-                                <TableCell>
-                                    <div className="flex gap-2 justify-center items-center">
-                                        <Tooltip closeDelay={100} color="primary" content="编辑" delay={600} size="sm">
-                                            <Button
-                                                as={Link}
+                            return (
+                                <TableRow key={tag.id}>
+                                    <TableCell>{tag.id}</TableCell>
+                                    <TableCell>{tag.name}</TableCell>
+                                    <TableCell>
+                                        <Chip
+                                            color={(stats?.dynamicAccessKeyCount ?? 0) > 0 ? "primary" : "default"}
+                                            size="sm"
+                                            variant="flat"
+                                        >
+                                            {stats?.dynamicAccessKeyCount ?? 0}
+                                        </Chip>
+                                    </TableCell>
+                                    <TableCell>{stats?.serverCount ?? 0}</TableCell>
+                                    <TableCell>{formatBytes(stats?.yesterdayUsage ?? 0)}</TableCell>
+                                    <TableCell>{formatBytes(stats?.todayUsage ?? 0)}</TableCell>
+
+                                    <TableCell>
+                                        <div className="flex gap-2 justify-center items-center">
+                                            <Tooltip
+                                                closeDelay={100}
                                                 color="primary"
-                                                href={`/tags/${tag.id}/edit`}
-                                                isIconOnly={true}
+                                                content="编辑"
+                                                delay={600}
                                                 size="sm"
-                                                variant="light"
                                             >
-                                                <EditIcon size={24} />
-                                            </Button>
-                                        </Tooltip>
+                                                <Button
+                                                    as={Link}
+                                                    color="primary"
+                                                    href={`/tags/${tag.id}/edit`}
+                                                    isIconOnly={true}
+                                                    size="sm"
+                                                    variant="light"
+                                                >
+                                                    <EditIcon size={24} />
+                                                </Button>
+                                            </Tooltip>
 
-                                        <Tooltip closeDelay={100} color="danger" content="编辑" delay={600} size="sm">
-                                            <Button
+                                            <Tooltip
+                                                closeDelay={100}
                                                 color="danger"
-                                                isIconOnly={true}
+                                                content="删除"
+                                                delay={600}
                                                 size="sm"
-                                                variant="light"
-                                                onPress={() => {
-                                                    setTag(() => tag);
-                                                    deleteConfirmModalDisclosure.onOpen();
-                                                }}
                                             >
-                                                <DeleteIcon size={24} />
-                                            </Button>
-                                        </Tooltip>
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                                                <Button
+                                                    color="danger"
+                                                    isIconOnly={true}
+                                                    size="sm"
+                                                    variant="light"
+                                                    onPress={() => {
+                                                        setTag(() => tag);
+                                                        deleteConfirmModalDisclosure.onOpen();
+                                                    }}
+                                                >
+                                                    <DeleteIcon size={24} />
+                                                </Button>
+                                            </Tooltip>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
                     </TableBody>
                 </Table>
             </div>

@@ -20,7 +20,11 @@ import { Link } from "@heroui/link";
 
 import ConfirmModal from "@/src/components/modals/confirm-modal";
 import { InfoIcon, PlusIcon, SelfManagedKeyIcon } from "@/src/components/icons";
-import { DynamicAccessKeySortField, DynamicAccessKeyWithAccessKeysCount, SortDirection } from "@/src/core/definitions";
+import {
+    DynamicAccessKeySortField,
+    DynamicAccessKeyWithAccessKeysCountAndPoolTags,
+    SortDirection
+} from "@/src/core/definitions";
 import {
     getDynamicAccessKeys,
     getDynamicAccessKeysCount,
@@ -39,7 +43,7 @@ interface SearchFormProps {
 }
 
 export default function DynamicAccessKeysList() {
-    const [dynamicAccessKeys, setDynamicAccessKeys] = useState<DynamicAccessKeyWithAccessKeysCount[]>([]);
+    const [dynamicAccessKeys, setDynamicAccessKeys] = useState<DynamicAccessKeyWithAccessKeysCountAndPoolTags[]>([]);
     const [currentDynamicAccessKey, setCurrentDynamicAccessKey] = useState<DynamicAccessKey>();
     const [page, setPage] = useState<number>(1);
     const [totalItems, setTotalItems] = useState<number>(1);
@@ -296,15 +300,20 @@ export default function DynamicAccessKeysList() {
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">
-                                    <span>{t("prefix")}</span>
-                                    <Chip
-                                        color={item.prefix ? "success" : "default"}
-                                        radius="sm"
-                                        size="sm"
-                                        variant="flat"
-                                    >
-                                        {item.prefix ? item.prefix : t("none")}
-                                    </Chip>
+                                    <span>{t("tags")}</span>
+                                    {item.serverPoolTags.length > 0 ? (
+                                        <div className="flex max-w-[240px] flex-wrap justify-end gap-1">
+                                            {item.serverPoolTags.map((tag) => (
+                                                <Chip key={tag} color="primary" radius="sm" size="sm" variant="flat">
+                                                    {tag}
+                                                </Chip>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <Chip color="default" radius="sm" size="sm" variant="flat">
+                                            {t("none")}
+                                        </Chip>
+                                    )}
                                 </div>
 
                                 <div className="flex gap-1 justify-between items-center">

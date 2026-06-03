@@ -78,7 +78,7 @@ export async function createTag(data: any): Promise<void> {
 }
 
 export async function getTags(filters?: { term?: string; skip?: number; take?: number }): Promise<Tag[]> {
-    const { term, skip = 0, take = 10 } = filters || {};
+    const { term, skip, take } = filters || {};
 
     return prisma.tag.findMany({
         where: term ? { name: { contains: term } } : undefined,

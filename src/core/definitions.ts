@@ -88,6 +88,10 @@ export type DynamicAccessKeyWithAccessKeysCount = Prisma.DynamicAccessKeyGetPayl
     };
 }>;
 
+export type DynamicAccessKeyWithAccessKeysCountAndPoolTags = DynamicAccessKeyWithAccessKeysCount & {
+    serverPoolTags: string[];
+};
+
 export type DynamicAccessKeyWithAccessKeys = Prisma.DynamicAccessKeyGetPayload<{
     include: {
         accessKeys: true;
