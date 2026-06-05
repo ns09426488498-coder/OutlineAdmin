@@ -33,7 +33,7 @@ const endOfDay = (date: Date): Date => {
 
 const getSnapshotUsage = async (serverId: number, startDate: Date, endDate: Date): Promise<number> => {
     const [baseline, snapshotsInRange] = await Promise.all([
-        prisma.serverTrafficSnapshot.findFirst({
+        prisma.vnstatTrafficSnapshot.findFirst({
             where: {
                 serverId,
                 capturedAt: {
@@ -44,7 +44,7 @@ const getSnapshotUsage = async (serverId: number, startDate: Date, endDate: Date
                 capturedAt: "desc"
             }
         }),
-        prisma.serverTrafficSnapshot.findMany({
+        prisma.vnstatTrafficSnapshot.findMany({
             where: {
                 serverId,
                 capturedAt: {
@@ -63,9 +63,10 @@ const getSnapshotUsage = async (serverId: number, startDate: Date, endDate: Date
 
     const usage = snapshots.slice(1).reduce((total, snapshot, index) => {
         const previous = snapshots[index];
-        const diff = snapshot.totalDataUsage - previous.totalDataUsage;
+        const rxDiff = snapshot.rxBytes - previous.rxBytes;
+        const txDiff = snapshot.txBytes - previous.txBytes;
 
-        return diff > BigInt(0) ? total + diff : total;
+        return total + (rxDiff > BigInt(0) ? rxDiff : BigInt(0)) + (txDiff > BigInt(0) ? txDiff : BigInt(0));
     }, BigInt(0));
 
     return Number(usage);
