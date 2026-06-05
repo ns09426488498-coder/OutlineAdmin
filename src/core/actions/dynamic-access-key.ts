@@ -17,7 +17,7 @@ import {
 import { BYTES_TO_MB_RATE, PAGE_SIZE } from "@/src/core/config";
 import { removeAccessKey } from "@/src/core/actions/access-key";
 
-type DynamicAccessKeyFilters = {
+export type DynamicAccessKeyFilters = {
     term?: string;
     skip?: number;
     take?: number;
@@ -190,6 +190,25 @@ export async function getDynamicAccessKeysOnlineSummary(filters?: {
         online: filteredData.filter((item) => item.lastOnlineAt && item.lastOnlineAt.getTime() >= onlineThreshold)
             .length,
         total: filteredData.length
+    };
+}
+
+export async function getDynamicAccessKeysPage(
+    filters?: DynamicAccessKeyFilters,
+    withKeysCount: boolean = false
+): Promise<{
+    items: DynamicAccessKeyWithAccessKeysCountAndPoolTags[];
+    online: number;
+    total: number;
+}> {
+    const [items, summary] = await Promise.all([
+        getDynamicAccessKeys(filters, withKeysCount),
+        getDynamicAccessKeysOnlineSummary(filters)
+    ]);
+
+    return {
+        items,
+        ...summary
     };
 }
 

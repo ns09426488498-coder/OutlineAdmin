@@ -17,7 +17,7 @@ import {
     Tooltip,
     useDisclosure
 } from "@heroui/react";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { DynamicAccessKey, Tag } from "@prisma/client";
 import { Link } from "@heroui/link";
@@ -30,8 +30,7 @@ import {
     SortDirection
 } from "@/src/core/definitions";
 import {
-    getDynamicAccessKeys,
-    getDynamicAccessKeysOnlineSummary,
+    getDynamicAccessKeysPage,
     removeDynamicAccessKey,
     resetDynamicAccessKeyUsage
 } from "@/src/core/actions/dynamic-access-key";
@@ -88,6 +87,7 @@ export default function DynamicAccessKeysList() {
     const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
     const [tags, setTags] = useState<Tag[]>([]);
     const [selectedTagId, setSelectedTagId] = useState<string>("");
+    const requestId = useRef<number>(0);
     const { language, t } = useLanguage();
 
     const totalPage = Math.ceil(totalItems / PAGE_SIZE);
@@ -114,14 +114,14 @@ export default function DynamicAccessKeysList() {
             tagId: selectedTagId || undefined
         };
 
-        const [filteredServers, summary] = await Promise.all([
-            getDynamicAccessKeys(params, true),
-            getDynamicAccessKeysOnlineSummary(params)
-        ]);
+        const currentRequestId = ++requestId.current;
+        const result = await getDynamicAccessKeysPage(params, true);
 
-        setTotalItems(summary.total);
-        setOnlineItems(summary.online);
-        setDynamicAccessKeys(filteredServers);
+        if (currentRequestId !== requestId.current) return;
+
+        setTotalItems(result.total);
+        setOnlineItems(result.online);
+        setDynamicAccessKeys(result.items);
         setPage(1);
     };
 
@@ -158,18 +158,18 @@ export default function DynamicAccessKeysList() {
         };
 
         setIsLoading(true);
+        const currentRequestId = ++requestId.current;
 
         try {
-            const [data, summary] = await Promise.all([
-                getDynamicAccessKeys(params, true),
-                getDynamicAccessKeysOnlineSummary(params)
-            ]);
+            const result = await getDynamicAccessKeysPage(params, true);
 
-            setDynamicAccessKeys(data);
-            setTotalItems(summary.total);
-            setOnlineItems(summary.online);
+            if (currentRequestId !== requestId.current) return;
+
+            setDynamicAccessKeys(result.items);
+            setTotalItems(result.total);
+            setOnlineItems(result.online);
         } finally {
-            setIsLoading(false);
+            if (currentRequestId === requestId.current) setIsLoading(false);
         }
     }, [page, searchForm, selectedTagId, sortDirection, sortField]);
 
