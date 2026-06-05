@@ -33,7 +33,11 @@ export default function ServerEditForm({ server, tags }: Props) {
             name: server.name,
             hostnameForNewAccessKeys: server.hostnameForNewAccessKeys,
             portForNewAccessKeys: server.portForNewAccessKeys,
-            tags: server.tags.map((st) => st.tagId.toString())
+            tags: server.tags.map((st) => st.tagId.toString()),
+            vnstatEnabled: server.vnstatEnabled,
+            vnstatSshUser: server.vnstatSshUser,
+            vnstatSshPort: server.vnstatSshPort,
+            vnstatInterface: server.vnstatInterface
         }
     });
 
@@ -161,6 +165,51 @@ export default function ServerEditForm({ server, tags }: Props) {
                             </Checkbox>
                         ))}
                     </CheckboxGroup>
+
+                    <Divider />
+
+                    <span className="text-lg">VPS 实际流量采集（vnStat）</span>
+                    <Checkbox
+                        isSelected={form.watch("vnstatEnabled")}
+                        onValueChange={(value) => form.setValue("vnstatEnabled", value)}
+                    >
+                        启用 vnStat 流量采集
+                    </Checkbox>
+
+                    <Input
+                        className="w-[320px]"
+                        description="管理面板使用专用 SSH 密钥连接节点，通常填写 root"
+                        label="SSH 用户"
+                        size="sm"
+                        variant="underlined"
+                        {...form.register("vnstatSshUser", {
+                            required: true,
+                            maxLength: 64
+                        })}
+                    />
+
+                    <Input
+                        className="w-[320px]"
+                        label="SSH 端口"
+                        size="sm"
+                        type="number"
+                        variant="underlined"
+                        {...form.register("vnstatSshPort", {
+                            required: true,
+                            min: 1,
+                            max: 65535,
+                            setValueAs: (v: string) => parseInt(v)
+                        })}
+                    />
+
+                    <Input
+                        className="w-[320px]"
+                        description="留空时首次采集会自动选择流量最大的网卡"
+                        label="vnStat 网卡"
+                        size="sm"
+                        variant="underlined"
+                        {...form.register("vnstatInterface")}
+                    />
 
                     <Button
                         className="w-fit"

@@ -7,6 +7,7 @@ import {
     getTrafficDashboardData,
     ServerTrafficRankItem,
     TrafficDashboardData,
+    TrafficDataSource,
     TrafficRange
 } from "@/src/core/actions/traffic";
 import { StatsIcon } from "@/src/components/icons";
@@ -130,7 +131,15 @@ function TrendChart({ data }: { data: TrafficDashboardData["trend"] }) {
     );
 }
 
-function RankingRow({ item, maxUsage }: { item: ServerTrafficRankItem; maxUsage: number }) {
+function RankingRow({
+    item,
+    maxUsage,
+    dataSource
+}: {
+    item: ServerTrafficRankItem;
+    maxUsage: number;
+    dataSource: TrafficDataSource;
+}) {
     const width = maxUsage > 0 ? Math.max(3, (item.usage / maxUsage) * 100) : 0;
     const isIncreased = item.changePercent !== null && item.changePercent > 0;
     const isReduced = item.changePercent !== null && item.changePercent < 0;
@@ -141,6 +150,12 @@ function RankingRow({ item, maxUsage }: { item: ServerTrafficRankItem; maxUsage:
                 <div className="min-w-0">
                     <div className="truncate text-sm font-medium">{item.name}</div>
                     <div className="truncate text-xs text-foreground-400">{item.hostnameOrIp}</div>
+                    {dataSource === "vnstat" && (
+                        <div className="truncate text-[11px] text-foreground-400">
+                            入站 {formatBytes(item.inboundUsage)}
+                            {item.interfaceName ? ` · 网卡 ${item.interfaceName}` : ""}
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">
@@ -159,6 +174,12 @@ function RankingRow({ item, maxUsage }: { item: ServerTrafficRankItem; maxUsage:
                 </div>
             </div>
 
+            {dataSource === "vnstat" && item.collectionError && (
+                <div className="truncate text-[11px] text-danger-500" title={item.collectionError}>
+                    采集失败：{item.collectionError}
+                </div>
+            )}
+
             <div className="h-2 overflow-hidden rounded-full bg-default-200 dark:bg-default-100">
                 <div className="h-full rounded-full bg-foreground transition-all" style={{ width: `${width}%` }} />
             </div>
@@ -171,6 +192,7 @@ export default function TrafficDashboard() {
     const [preset, setPreset] = useState<TrafficPreset>("today");
     const [customStart, setCustomStart] = useState<string>(formatDateInput(new Date()));
     const [customEnd, setCustomEnd] = useState<string>(formatDateInput(new Date()));
+    const [dataSource, setDataSource] = useState<TrafficDataSource>("vnstat");
     const [data, setData] = useState<TrafficDashboardData>();
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [hasMounted, setHasMounted] = useState<boolean>(false);
@@ -187,12 +209,12 @@ export default function TrafficDashboard() {
 
         const load = async () => {
             setIsLoading(true);
-            setData(await getTrafficDashboardData(range));
+            setData(await getTrafficDashboardData(range, dataSource));
             setIsLoading(false);
         };
 
         load();
-    }, [hasMounted, range]);
+    }, [dataSource, hasMounted, range]);
 
     if (!hasMounted) {
         return (
@@ -227,6 +249,21 @@ export default function TrafficDashboard() {
 
                 <div className="flex flex-wrap items-center gap-2">
                     <ButtonGroup size="sm" variant="flat">
+                        <Button
+                            color={dataSource === "vnstat" ? "primary" : "default"}
+                            onPress={() => setDataSource("vnstat")}
+                        >
+                            VPS 实际流量
+                        </Button>
+                        <Button
+                            color={dataSource === "outline" ? "primary" : "default"}
+                            onPress={() => setDataSource("outline")}
+                        >
+                            Outline 代理流量
+                        </Button>
+                    </ButtonGroup>
+
+                    <ButtonGroup size="sm" variant="flat">
                         {presets.map((item) => (
                             <Button
                                 key={item}
@@ -259,26 +296,49 @@ export default function TrafficDashboard() {
                 </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <Card className="bg-content1" radius="sm" shadow="none">
                     <CardBody className="grid gap-1">
-                        <span className="text-sm text-foreground-500">{t("totalTraffic")}</span>
+                        <span className="text-sm text-foreground-500">
+                            {dataSource === "vnstat" ? "VPS 出站流量" : t("totalTraffic")}
+                        </span>
                         {isLoading ? (
                             <Skeleton className="h-8 w-28 rounded-md" />
                         ) : (
-                            <span className="text-2xl font-semibold">{formatBytes(data?.totalUsage ?? 0)}</span>
+                            <span className="text-2xl font-semibold">{formatBytes(data?.outboundUsage ?? 0)}</span>
                         )}
                     </CardBody>
                 </Card>
 
                 <Card className="bg-content1" radius="sm" shadow="none">
                     <CardBody className="grid gap-1">
-                        <span className="text-sm text-foreground-500">{t("activeServers")}</span>
+                        <span className="text-sm text-foreground-500">
+                            {dataSource === "vnstat" ? "VPS 入站流量" : t("activeServers")}
+                        </span>
                         {isLoading ? (
                             <Skeleton className="h-8 w-20 rounded-md" />
                         ) : (
                             <span className="text-2xl font-semibold">
-                                {data?.activeServers ?? 0}/{data?.totalServers ?? 0}
+                                {dataSource === "vnstat"
+                                    ? formatBytes(data?.inboundUsage ?? 0)
+                                    : `${data?.activeServers ?? 0}/${data?.totalServers ?? 0}`}
+                            </span>
+                        )}
+                    </CardBody>
+                </Card>
+
+                <Card className="bg-content1" radius="sm" shadow="none">
+                    <CardBody className="grid gap-1">
+                        <span className="text-sm text-foreground-500">
+                            {dataSource === "vnstat" ? "采集正常节点" : "总计流量"}
+                        </span>
+                        {isLoading ? (
+                            <Skeleton className="h-8 w-20 rounded-md" />
+                        ) : (
+                            <span className="text-2xl font-semibold">
+                                {dataSource === "vnstat"
+                                    ? `${data?.collectingServers ?? 0}/${data?.totalServers ?? 0}`
+                                    : formatBytes(data?.totalUsage ?? 0)}
                             </span>
                         )}
                     </CardBody>
@@ -309,7 +369,9 @@ export default function TrafficDashboard() {
                             ))}
 
                         {!isLoading &&
-                            data?.ranking.map((item) => <RankingRow key={item.id} item={item} maxUsage={maxUsage} />)}
+                            data?.ranking.map((item) => (
+                                <RankingRow key={item.id} dataSource={dataSource} item={item} maxUsage={maxUsage} />
+                            ))}
 
                         {!isLoading && data?.ranking.length === 0 && (
                             <div className="grid min-h-[180px] place-items-center text-sm text-foreground-400">

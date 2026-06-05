@@ -195,6 +195,10 @@ export async function updateServer(id: number, data: EditServerRequest): Promise
             name: data.name,
             hostnameForNewAccessKeys: data.hostnameForNewAccessKeys,
             portForNewAccessKeys: data.portForNewAccessKeys,
+            vnstatEnabled: data.vnstatEnabled,
+            vnstatSshUser: data.vnstatSshUser,
+            vnstatSshPort: data.vnstatSshPort,
+            vnstatInterface: data.vnstatInterface?.trim() || null,
 
             tags: {
                 deleteMany: {},

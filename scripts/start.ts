@@ -1,9 +1,10 @@
-import { runCommand, startDakJob, startHealthCheckJob, startSyncJob } from "@/scripts/utils";
+import { runCommand, startDakJob, startHealthCheckJob, startSyncJob, startVnstatJob } from "@/scripts/utils";
 
 const main = async () => {
     startSyncJob();
     startHealthCheckJob();
     startDakJob();
+    startVnstatJob();
 
     try {
         await runCommand("node", ["server.js"]);

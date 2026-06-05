@@ -129,6 +129,33 @@ export const startDakJob = async () => {
     process.exit(0);
 };
 
+export const startVnstatJob = async () => {
+    const logger = createLogger(LoggerContext.OutlineSyncJob);
+    const interval = 5 * 60 * 1000;
+    let canRunJob = true;
+
+    process.on("SIGINT", () => {
+        canRunJob = false;
+    });
+    process.on("SIGTERM", () => {
+        canRunJob = false;
+    });
+
+    logger.info("Starting vnStat collection job...");
+
+    while (canRunJob) {
+        try {
+            await runCommand("npm", ["run", "vnstat-job"]);
+        } catch (error) {
+            logger.error("vnStat collection job failed:", error);
+        }
+
+        if (canRunJob) {
+            await new Promise((resolve) => setTimeout(resolve, interval));
+        }
+    }
+};
+
 export const runCommand = (command: string, args: string[]): Promise<void> => {
     return new Promise((resolve, reject) => {
         const process = spawn(command, args, { stdio: "inherit", shell: true });

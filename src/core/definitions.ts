@@ -118,6 +118,10 @@ export interface EditServerRequest {
     portForNewAccessKeys: number;
     hostnameForNewAccessKeys: string;
     tags: string[];
+    vnstatEnabled: boolean;
+    vnstatSshUser: string;
+    vnstatSshPort: number;
+    vnstatInterface?: string | null;
 }
 
 export enum DataLimitUnit {

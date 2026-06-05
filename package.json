@@ -17,6 +17,7 @@
     "sync-job": "node ./dist/scripts/outline-sync-job.js",
     "health-check-job": "node ./dist/scripts/health-check-job.js",
     "dak-job": "node ./dist/scripts/dak-job.js",
+    "vnstat-job": "node ./dist/scripts/vnstat-job.js",
     "setup": "node ./dist/scripts/setup.js"
   },
   "dependencies": {

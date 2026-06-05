@@ -31,6 +31,12 @@ model Server {
   totalDataUsage           BigInt?
   isMetricsEnabled         Boolean
   isAvailable              Boolean      @default(true)
+  vnstatEnabled            Boolean      @default(true)
+  vnstatSshUser            String       @default("root")
+  vnstatSshPort            Int          @default(22)
+  vnstatInterface          String?
+  vnstatLastCollectedAt    DateTime?
+  vnstatLastError          String?
   apiCreatedAt             DateTime
   createdAt                DateTime     @default(now())
   updatedAt                DateTime?    @updatedAt
@@ -38,6 +44,7 @@ model Server {
   healthCheck              HealthCheck?
   tags                     ServerTag[]
   trafficSnapshots         ServerTrafficSnapshot[]
+  vnstatTrafficSnapshots   VnstatTrafficSnapshot[]
 }
 
 model AccessKey {
@@ -137,6 +144,20 @@ model ServerTrafficSnapshot {
   serverId       Int
   totalDataUsage BigInt   @default(0)
   capturedAt     DateTime @default(now())
+
+  server Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  @@index([serverId, capturedAt])
+  @@index([capturedAt])
+}
+
+model VnstatTrafficSnapshot {
+  id         Int      @id @default(autoincrement())
+  serverId   Int
+  rxBytes    BigInt   @default(0)
+  txBytes    BigInt   @default(0)
+  totalBytes BigInt   @default(0)
+  capturedAt DateTime @default(now())
 
   server Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
 

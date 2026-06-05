@@ -7,15 +7,22 @@ export interface TrafficRange {
     endDate: Date;
 }
 
+export type TrafficDataSource = "vnstat" | "outline";
+
 export interface ServerTrafficRankItem {
     id: number;
     name: string;
     hostnameOrIp: string;
     tags: string[];
     usage: number;
+    inboundUsage: number;
+    outboundUsage: number;
     previousUsage: number;
     changePercent: number | null;
     isAvailable: boolean;
+    interfaceName: string | null;
+    lastCollectedAt: Date | null;
+    collectionError: string | null;
 }
 
 export interface TrafficTrendPoint {
@@ -25,50 +32,66 @@ export interface TrafficTrendPoint {
 
 export interface TrafficDashboardData {
     totalUsage: number;
+    inboundUsage: number;
+    outboundUsage: number;
     activeServers: number;
     totalServers: number;
+    collectingServers: number;
+    dataSource: TrafficDataSource;
     ranking: ServerTrafficRankItem[];
     trend: TrafficTrendPoint[];
 }
 
-const getSnapshotUsage = async (serverId: number, startDate: Date, endDate: Date): Promise<number> => {
-    const [baseline, snapshotsInRange] = await Promise.all([
-        prisma.serverTrafficSnapshot.findFirst({
-            where: {
-                serverId,
-                capturedAt: {
-                    lt: startDate
-                }
-            },
-            orderBy: {
-                capturedAt: "desc"
-            }
-        }),
-        prisma.serverTrafficSnapshot.findMany({
-            where: {
-                serverId,
-                capturedAt: {
-                    gte: startDate,
-                    lte: endDate
-                }
-            },
-            orderBy: {
-                capturedAt: "asc"
-            }
-        })
-    ]);
-    const snapshots = baseline ? [baseline, ...snapshotsInRange] : snapshotsInRange;
+interface UsagePair {
+    rx: number;
+    tx: number;
+}
 
+const sumPositiveDiffs = <T>(snapshots: T[], getValue: (snapshot: T) => bigint): number => {
     if (snapshots.length < 2) return 0;
 
     const usage = snapshots.slice(1).reduce((total, snapshot, index) => {
-        const previous = snapshots[index];
-        const diff = snapshot.totalDataUsage - previous.totalDataUsage;
+        const diff = getValue(snapshot) - getValue(snapshots[index]);
 
         return diff > 0 ? total + diff : total;
     }, BigInt(0));
 
     return Number(usage);
+};
+
+const getOutlineUsage = async (serverId: number, startDate: Date, endDate: Date): Promise<UsagePair> => {
+    const [baseline, snapshotsInRange] = await Promise.all([
+        prisma.serverTrafficSnapshot.findFirst({
+            where: { serverId, capturedAt: { lt: startDate } },
+            orderBy: { capturedAt: "desc" }
+        }),
+        prisma.serverTrafficSnapshot.findMany({
+            where: { serverId, capturedAt: { gte: startDate, lte: endDate } },
+            orderBy: { capturedAt: "asc" }
+        })
+    ]);
+    const snapshots = baseline ? [baseline, ...snapshotsInRange] : snapshotsInRange;
+
+    return { rx: 0, tx: sumPositiveDiffs(snapshots, (snapshot) => snapshot.totalDataUsage) };
+};
+
+const getVnstatUsage = async (serverId: number, startDate: Date, endDate: Date): Promise<UsagePair> => {
+    const [baseline, snapshotsInRange] = await Promise.all([
+        prisma.vnstatTrafficSnapshot.findFirst({
+            where: { serverId, capturedAt: { lt: startDate } },
+            orderBy: { capturedAt: "desc" }
+        }),
+        prisma.vnstatTrafficSnapshot.findMany({
+            where: { serverId, capturedAt: { gte: startDate, lte: endDate } },
+            orderBy: { capturedAt: "asc" }
+        })
+    ]);
+    const snapshots = baseline ? [baseline, ...snapshotsInRange] : snapshotsInRange;
+
+    return {
+        rx: sumPositiveDiffs(snapshots, (snapshot) => snapshot.rxBytes),
+        tx: sumPositiveDiffs(snapshots, (snapshot) => snapshot.txBytes)
+    };
 };
 
 const formatTrendLabel = (date: Date): string => {
@@ -95,7 +118,10 @@ const splitRangeIntoBuckets = (startDate: Date, endDate: Date, count: number): T
     return ranges;
 };
 
-export async function getTrafficDashboardData(range: TrafficRange): Promise<TrafficDashboardData> {
+export async function getTrafficDashboardData(
+    range: TrafficRange,
+    dataSource: TrafficDataSource = "vnstat"
+): Promise<TrafficDashboardData> {
     const startDate = new Date(range.startDate);
     const endDate = new Date(range.endDate);
     const duration = endDate.getTime() - startDate.getTime();
@@ -103,38 +129,38 @@ export async function getTrafficDashboardData(range: TrafficRange): Promise<Traf
         startDate: new Date(startDate.getTime() - duration),
         endDate: startDate
     };
+    const getUsage = dataSource === "vnstat" ? getVnstatUsage : getOutlineUsage;
 
     const servers = await prisma.server.findMany({
-        include: {
-            tags: {
-                include: {
-                    tag: true
-                }
-            }
-        },
-        orderBy: {
-            name: "asc"
-        }
+        include: { tags: { include: { tag: true } } },
+        orderBy: { name: "asc" }
     });
 
     const ranking = await Promise.all(
         servers.map(async (server) => {
             const [usage, previousUsage] = await Promise.all([
-                getSnapshotUsage(server.id, startDate, endDate),
-                getSnapshotUsage(server.id, previousRange.startDate, previousRange.endDate)
+                getUsage(server.id, startDate, endDate),
+                getUsage(server.id, previousRange.startDate, previousRange.endDate)
             ]);
             const changePercent =
-                previousUsage > 0 ? Number((((usage - previousUsage) / previousUsage) * 100).toFixed(1)) : null;
+                previousUsage.tx > 0
+                    ? Number((((usage.tx - previousUsage.tx) / previousUsage.tx) * 100).toFixed(1))
+                    : null;
 
             return {
                 id: server.id,
                 name: server.name,
                 hostnameOrIp: server.hostnameOrIp,
                 tags: server.tags.map((item) => item.tag.name),
-                usage,
-                previousUsage,
+                usage: usage.tx,
+                inboundUsage: usage.rx,
+                outboundUsage: usage.tx,
+                previousUsage: previousUsage.tx,
                 changePercent,
-                isAvailable: server.isAvailable
+                isAvailable: server.isAvailable,
+                interfaceName: dataSource === "vnstat" ? server.vnstatInterface : null,
+                lastCollectedAt: dataSource === "vnstat" ? server.vnstatLastCollectedAt : null,
+                collectionError: dataSource === "vnstat" ? server.vnstatLastError : null
             };
         })
     );
@@ -145,20 +171,27 @@ export async function getTrafficDashboardData(range: TrafficRange): Promise<Traf
     const trend = await Promise.all(
         buckets.map(async (bucket) => {
             const usageValues = await Promise.all(
-                servers.map((server) => getSnapshotUsage(server.id, bucket.startDate, bucket.endDate))
+                servers.map((server) => getUsage(server.id, bucket.startDate, bucket.endDate))
             );
 
             return {
                 label: formatTrendLabel(bucket.endDate),
-                usage: usageValues.reduce((sum, value) => sum + value, 0)
+                usage: usageValues.reduce((sum, value) => sum + value.tx, 0)
             };
         })
     );
 
+    const inboundUsage = ranking.reduce((sum, item) => sum + item.inboundUsage, 0);
+    const outboundUsage = ranking.reduce((sum, item) => sum + item.outboundUsage, 0);
+
     return {
-        totalUsage: ranking.reduce((sum, item) => sum + item.usage, 0),
+        totalUsage: inboundUsage + outboundUsage,
+        inboundUsage,
+        outboundUsage,
         activeServers: servers.filter((server) => server.isAvailable).length,
         totalServers: servers.length,
+        collectingServers: servers.filter((server) => server.vnstatLastCollectedAt && !server.vnstatLastError).length,
+        dataSource,
         ranking,
         trend
     };
