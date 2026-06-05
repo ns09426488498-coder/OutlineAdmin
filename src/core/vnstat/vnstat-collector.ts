@@ -25,11 +25,13 @@ interface VnstatResponse {
 
 const isValidSshValue = (value: string): boolean => /^[a-zA-Z0-9_.:@-]+$/.test(value);
 const isValidInterface = (value: string): boolean => /^[a-zA-Z0-9_.:-]+$/.test(value);
+const isVirtualInterface = (name: string): boolean =>
+    /^(br-|docker|veth|lo$|tun|tap|wg|tailscale|virbr|vmnet|zt)/i.test(name);
 
 const selectInterface = (data: VnstatResponse, interfaceName?: string | null): VnstatInterface => {
     const interfaces = data.interfaces ?? [];
 
-    if (interfaceName) {
+    if (interfaceName && !isVirtualInterface(interfaceName)) {
         const selected = interfaces.find((item) => item.name === interfaceName);
 
         if (!selected) {
@@ -39,7 +41,9 @@ const selectInterface = (data: VnstatResponse, interfaceName?: string | null): V
         return selected;
     }
 
-    const selected = [...interfaces].sort(
+    const physicalInterfaces = interfaces.filter((item) => !isVirtualInterface(item.name));
+    const candidates = physicalInterfaces.length > 0 ? physicalInterfaces : interfaces;
+    const selected = [...candidates].sort(
         (a, b) => b.traffic.total.rx + b.traffic.total.tx - (a.traffic.total.rx + a.traffic.total.tx)
     )[0];
 
@@ -93,8 +97,18 @@ export async function collectServerVnstat(server: Server): Promise<void> {
         const selectedInterface = await getRemoteVnstat(server);
         const rxBytes = BigInt(selectedInterface.traffic.total.rx);
         const txBytes = BigInt(selectedInterface.traffic.total.tx);
+        const interfaceChanged = server.vnstatInterface !== selectedInterface.name;
 
         await prisma.$transaction([
+            ...(interfaceChanged
+                ? [
+                      prisma.vnstatTrafficSnapshot.deleteMany({
+                          where: {
+                              serverId: server.id
+                          }
+                      })
+                  ]
+                : []),
             prisma.vnstatTrafficSnapshot.create({
                 data: {
                     serverId: server.id,
