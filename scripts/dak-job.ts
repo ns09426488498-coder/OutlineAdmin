@@ -123,6 +123,28 @@ const main = async () => {
             logger.error("Error processing DAK", { id: dak.id, name: dak.name, error });
         }
     }
+
+    const latestDynamicAccessKeys = await prisma.dynamicAccessKey.findMany({
+        select: {
+            id: true,
+            dataUsage: true
+        }
+    });
+
+    await prisma.dynamicAccessKeyTrafficSnapshot.createMany({
+        data: latestDynamicAccessKeys.map((dak) => ({
+            dynamicAccessKeyId: dak.id,
+            dataUsage: dak.dataUsage
+        }))
+    });
+
+    await prisma.dynamicAccessKeyTrafficSnapshot.deleteMany({
+        where: {
+            capturedAt: {
+                lt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+            }
+        }
+    });
 };
 
 main()

@@ -7,7 +7,7 @@ export interface TrafficRange {
     endDate: Date;
 }
 
-export type TrafficDataSource = "vnstat" | "outline";
+export type TrafficDataSource = "vnstat" | "outline" | "dynamic-key";
 
 export interface ServerTrafficRankItem {
     id: number;
@@ -23,6 +23,8 @@ export interface ServerTrafficRankItem {
     interfaceName: string | null;
     lastCollectedAt: Date | null;
     collectionError: string | null;
+    currentUsage: number;
+    dataLimit: number | null;
 }
 
 export interface TrafficTrendPoint {
@@ -94,6 +96,16 @@ const getVnstatUsage = async (serverId: number, startDate: Date, endDate: Date):
     };
 };
 
+const getDynamicKeyTags = (serverPoolType: string | null, serverPoolValue: string | null): string[] => {
+    if (serverPoolType !== "tag" || !serverPoolValue) return [];
+
+    try {
+        return JSON.parse(serverPoolValue).map(String);
+    } catch {
+        return [];
+    }
+};
+
 const formatTrendLabel = (date: Date): string => {
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
@@ -129,6 +141,89 @@ export async function getTrafficDashboardData(
         startDate: new Date(startDate.getTime() - duration),
         endDate: startDate
     };
+
+    if (dataSource === "dynamic-key") {
+        const snapshotStart = new Date(previousRange.startDate.getTime() - 10 * 60 * 1000);
+        const [dynamicAccessKeys, tags, snapshots] = await Promise.all([
+            prisma.dynamicAccessKey.findMany({ orderBy: { name: "asc" } }),
+            prisma.tag.findMany(),
+            prisma.dynamicAccessKeyTrafficSnapshot.findMany({
+                where: { capturedAt: { gte: snapshotStart, lte: endDate } },
+                orderBy: { capturedAt: "asc" }
+            })
+        ]);
+        const tagNames = new Map(tags.map((tag) => [String(tag.id), tag.name]));
+        const snapshotsByKey = new Map<number, typeof snapshots>();
+
+        for (const snapshot of snapshots) {
+            const values = snapshotsByKey.get(snapshot.dynamicAccessKeyId) ?? [];
+
+            values.push(snapshot);
+            snapshotsByKey.set(snapshot.dynamicAccessKeyId, values);
+        }
+
+        const getUsageFromSnapshots = (id: number, rangeStart: Date, rangeEnd: Date): number => {
+            const values = snapshotsByKey.get(id) ?? [];
+            const baseline = [...values].reverse().find((snapshot) => snapshot.capturedAt < rangeStart);
+            const inRange = values.filter(
+                (snapshot) => snapshot.capturedAt >= rangeStart && snapshot.capturedAt <= rangeEnd
+            );
+
+            return sumPositiveDiffs(baseline ? [baseline, ...inRange] : inRange, (snapshot) => snapshot.dataUsage);
+        };
+
+        const ranking = dynamicAccessKeys.map((dak) => {
+            const usage = getUsageFromSnapshots(dak.id, startDate, endDate);
+            const previousUsage = getUsageFromSnapshots(dak.id, previousRange.startDate, previousRange.endDate);
+            const changePercent =
+                previousUsage > 0 ? Number((((usage - previousUsage) / previousUsage) * 100).toFixed(1)) : null;
+
+            return {
+                id: dak.id,
+                name: dak.name,
+                hostnameOrIp: `动态密钥 ID ${dak.id}`,
+                tags: getDynamicKeyTags(dak.serverPoolType, dak.serverPoolValue)
+                    .map((id) => tagNames.get(id))
+                    .filter(Boolean) as string[],
+                usage,
+                inboundUsage: 0,
+                outboundUsage: usage,
+                previousUsage,
+                changePercent,
+                isAvailable: true,
+                interfaceName: null,
+                lastCollectedAt: null,
+                collectionError: null,
+                currentUsage: Number(dak.dataUsage),
+                dataLimit: dak.dataLimit === null ? null : Number(dak.dataLimit) * 1000 * 1000
+            };
+        });
+
+        ranking.sort((a, b) => b.usage - a.usage || a.name.localeCompare(b.name));
+
+        const buckets = splitRangeIntoBuckets(startDate, endDate, 7);
+        const trend = buckets.map((bucket) => ({
+            label: formatTrendLabel(bucket.endDate),
+            usage: dynamicAccessKeys.reduce(
+                (sum, dak) => sum + getUsageFromSnapshots(dak.id, bucket.startDate, bucket.endDate),
+                0
+            )
+        }));
+        const totalUsage = ranking.reduce((sum, item) => sum + item.usage, 0);
+
+        return {
+            totalUsage,
+            inboundUsage: 0,
+            outboundUsage: totalUsage,
+            activeServers: ranking.filter((item) => item.usage > 0).length,
+            totalServers: ranking.length,
+            collectingServers: ranking.filter((item) => item.usage > 0).length,
+            dataSource,
+            ranking,
+            trend
+        };
+    }
+
     const getUsage = dataSource === "vnstat" ? getVnstatUsage : getOutlineUsage;
 
     const servers = await prisma.server.findMany({
@@ -160,7 +255,9 @@ export async function getTrafficDashboardData(
                 isAvailable: server.isAvailable,
                 interfaceName: dataSource === "vnstat" ? server.vnstatInterface : null,
                 lastCollectedAt: dataSource === "vnstat" ? server.vnstatLastCollectedAt : null,
-                collectionError: dataSource === "vnstat" ? server.vnstatLastError : null
+                collectionError: dataSource === "vnstat" ? server.vnstatLastError : null,
+                currentUsage: 0,
+                dataLimit: null
             };
         })
     );

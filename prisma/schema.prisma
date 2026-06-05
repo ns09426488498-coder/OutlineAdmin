@@ -88,7 +88,8 @@ model DynamicAccessKey {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
-  accessKeys AccessKey[] @relation("AccessKeyDynamicAccessKeys")
+  accessKeys       AccessKey[]                       @relation("AccessKeyDynamicAccessKeys")
+  trafficSnapshots DynamicAccessKeyTrafficSnapshot[]
 }
 
 model NotificationChannel {
@@ -162,5 +163,17 @@ model VnstatTrafficSnapshot {
   server Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
 
   @@index([serverId, capturedAt])
+  @@index([capturedAt])
+}
+
+model DynamicAccessKeyTrafficSnapshot {
+  id                 Int      @id @default(autoincrement())
+  dynamicAccessKeyId Int
+  dataUsage          BigInt   @default(0)
+  capturedAt         DateTime @default(now())
+
+  dynamicAccessKey DynamicAccessKey @relation(fields: [dynamicAccessKeyId], references: [id], onDelete: Cascade)
+
+  @@index([dynamicAccessKeyId, capturedAt])
   @@index([capturedAt])
 }

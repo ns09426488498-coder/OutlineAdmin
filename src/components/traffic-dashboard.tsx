@@ -156,6 +156,13 @@ function RankingRow({
                             {item.interfaceName ? ` · 网卡 ${item.interfaceName}` : ""}
                         </div>
                     )}
+                    {dataSource === "dynamic-key" && (
+                        <div className="truncate text-[11px] text-foreground-400">
+                            累计 {formatBytes(item.currentUsage)}
+                            {item.dataLimit !== null ? ` / ${formatBytes(item.dataLimit)}` : ""}
+                            {item.tags.length > 0 ? ` · 标签 ${item.tags.join(", ")}` : ""}
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">
@@ -261,6 +268,12 @@ export default function TrafficDashboard() {
                         >
                             Outline 代理流量
                         </Button>
+                        <Button
+                            color={dataSource === "dynamic-key" ? "primary" : "default"}
+                            onPress={() => setDataSource("dynamic-key")}
+                        >
+                            流量使用排行
+                        </Button>
                     </ButtonGroup>
 
                     <ButtonGroup size="sm" variant="flat">
@@ -300,7 +313,11 @@ export default function TrafficDashboard() {
                 <Card className="bg-content1" radius="sm" shadow="none">
                     <CardBody className="grid gap-1">
                         <span className="text-sm text-foreground-500">
-                            {dataSource === "vnstat" ? "VPS 出站流量" : t("totalTraffic")}
+                            {dataSource === "vnstat"
+                                ? "VPS 出站流量"
+                                : dataSource === "dynamic-key"
+                                  ? "客户使用流量"
+                                  : t("totalTraffic")}
                         </span>
                         {isLoading ? (
                             <Skeleton className="h-8 w-28 rounded-md" />
@@ -313,7 +330,11 @@ export default function TrafficDashboard() {
                 <Card className="bg-content1" radius="sm" shadow="none">
                     <CardBody className="grid gap-1">
                         <span className="text-sm text-foreground-500">
-                            {dataSource === "vnstat" ? "VPS 入站流量" : t("activeServers")}
+                            {dataSource === "vnstat"
+                                ? "VPS 入站流量"
+                                : dataSource === "dynamic-key"
+                                  ? "产生流量的客户"
+                                  : t("activeServers")}
                         </span>
                         {isLoading ? (
                             <Skeleton className="h-8 w-20 rounded-md" />
@@ -330,7 +351,11 @@ export default function TrafficDashboard() {
                 <Card className="bg-content1" radius="sm" shadow="none">
                     <CardBody className="grid gap-1">
                         <span className="text-sm text-foreground-500">
-                            {dataSource === "vnstat" ? "采集正常节点" : "总计流量"}
+                            {dataSource === "vnstat"
+                                ? "采集正常节点"
+                                : dataSource === "dynamic-key"
+                                  ? "最高用量客户"
+                                  : "总计流量"}
                         </span>
                         {isLoading ? (
                             <Skeleton className="h-8 w-20 rounded-md" />
@@ -338,7 +363,9 @@ export default function TrafficDashboard() {
                             <span className="text-2xl font-semibold">
                                 {dataSource === "vnstat"
                                     ? `${data?.collectingServers ?? 0}/${data?.totalServers ?? 0}`
-                                    : formatBytes(data?.totalUsage ?? 0)}
+                                    : dataSource === "dynamic-key"
+                                      ? formatBytes(data?.ranking[0]?.usage ?? 0)
+                                      : formatBytes(data?.totalUsage ?? 0)}
                             </span>
                         )}
                     </CardBody>
@@ -357,7 +384,9 @@ export default function TrafficDashboard() {
             <div className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
                 <Card className="bg-content1" radius="sm" shadow="none">
                     <CardHeader className="flex items-center justify-between gap-2">
-                        <span className="font-medium">{t("serverTrafficRanking")}</span>
+                        <span className="font-medium">
+                            {dataSource === "dynamic-key" ? "动态密钥流量使用排行" : t("serverTrafficRanking")}
+                        </span>
                         <Chip radius="sm" size="sm" variant="flat">
                             {data?.ranking.length ?? 0}
                         </Chip>
@@ -383,7 +412,9 @@ export default function TrafficDashboard() {
 
                 <Card className="bg-content1" radius="sm" shadow="none">
                     <CardHeader>
-                        <span className="font-medium">{t("trafficTrend")}</span>
+                        <span className="font-medium">
+                            {dataSource === "dynamic-key" ? "客户流量使用趋势" : t("trafficTrend")}
+                        </span>
                     </CardHeader>
                     <CardBody>
                         {isLoading ? (
