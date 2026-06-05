@@ -16,6 +16,22 @@ const main = async () => {
 
     logger.info(`Found ${dynamicAccessKeys.length} DAK(s) to process.`);
 
+    const updateLastOnlineAt = async (dak: DynamicAccessKey, accessKeys: { lastTrafficSeen: Date | null }[]) => {
+        const lastOnlineAt = accessKeys.reduce<Date | null>((latest, key) => {
+            if (!key.lastTrafficSeen) return latest;
+            if (!latest || key.lastTrafficSeen > latest) return key.lastTrafficSeen;
+
+            return latest;
+        }, dak.lastOnlineAt);
+
+        if (lastOnlineAt && (!dak.lastOnlineAt || lastOnlineAt > dak.lastOnlineAt)) {
+            await prisma.dynamicAccessKey.update({
+                where: { id: dak.id },
+                data: { lastOnlineAt }
+            });
+        }
+    };
+
     const processSelfManagedDak = async (dak: DynamicAccessKey) => {
         const validityExpiryDate = getDakExpiryDateBasedOnValidityPeriod(dak);
         const fixedExpiryDate = dak.expiresAt;
@@ -48,6 +64,7 @@ const main = async () => {
             name: dak.name,
             count: accessKeys.length
         });
+        await updateLastOnlineAt(dak, accessKeys);
 
         const dataLimit = dak.dataLimit ? Number(dak.dataLimit) : 0;
         const dataLimitInBytes = dataLimit * BYTES_TO_MB_RATE;
@@ -91,6 +108,7 @@ const main = async () => {
 
             return;
         }
+        await updateLastOnlineAt(dak, accessKeys);
 
         const dataUsage = accessKeys.reduce((acc, key) => acc + Number(key.dataUsage || 0), 0);
 

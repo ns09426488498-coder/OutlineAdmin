@@ -47,6 +47,36 @@ interface SearchFormProps {
     term: string;
 }
 
+function OnlineStatusLight({ lastOnlineAt, language }: { lastOnlineAt: Date | null; language: "zh" | "en" }) {
+    const lastOnlineTime = lastOnlineAt ? new Date(lastOnlineAt) : null;
+    const offlineMinutes = lastOnlineTime
+        ? Math.max(0, Math.floor((Date.now() - lastOnlineTime.getTime()) / 60000))
+        : null;
+    const isOnline = offlineMinutes !== null && offlineMinutes <= 5;
+    const tooltip = isOnline
+        ? language === "zh"
+            ? "当前在线"
+            : "Currently online"
+        : lastOnlineTime
+          ? language === "zh"
+              ? `最后在线时间：${lastOnlineTime.toLocaleString("zh-CN", { hour12: false })} 离线时长：${offlineMinutes}分钟`
+              : `Last online: ${lastOnlineTime.toLocaleString()} · Offline for ${offlineMinutes} minutes`
+          : language === "zh"
+            ? "暂无在线记录"
+            : "No online activity recorded";
+
+    return (
+        <Tooltip content={tooltip} placement="top">
+            <span
+                aria-label={tooltip}
+                className={`inline-block size-2.5 shrink-0 rounded-full ${
+                    isOnline ? "bg-success shadow-[0_0_7px_hsl(var(--heroui-success))]" : "bg-default-400"
+                }`}
+            />
+        </Tooltip>
+    );
+}
+
 export default function DynamicAccessKeysList() {
     const [dynamicAccessKeys, setDynamicAccessKeys] = useState<DynamicAccessKeyWithAccessKeysCountAndPoolTags[]>([]);
     const [currentDynamicAccessKey, setCurrentDynamicAccessKey] = useState<DynamicAccessKey>();
@@ -140,6 +170,12 @@ export default function DynamicAccessKeysList() {
 
     useEffect(() => {
         updateData();
+    }, [updateData]);
+
+    useEffect(() => {
+        const interval = window.setInterval(updateData, 60 * 1000);
+
+        return () => window.clearInterval(interval);
     }, [updateData]);
 
     useEffect(() => {
@@ -291,7 +327,10 @@ export default function DynamicAccessKeysList() {
                         <Card key={item.id} className="md:w-[400px] w-full">
                             <CardHeader>
                                 <div className="grid gap-1">
-                                    <span className="max-w-[360px] truncate">{item.name}</span>
+                                    <div className="flex max-w-[360px] items-center gap-2">
+                                        <span className="truncate">{item.name}</span>
+                                        <OnlineStatusLight language={language} lastOnlineAt={item.lastOnlineAt} />
+                                    </div>
                                     <span className="max-w-[360px] truncate text-foreground-400 text-sm">
                                         {item.path}
                                     </span>

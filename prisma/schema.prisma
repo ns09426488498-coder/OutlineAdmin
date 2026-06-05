@@ -60,6 +60,7 @@ model AccessKey {
   dataLimit     BigInt?
   dataLimitUnit String
   dataUsage     BigInt    @default(0)
+  lastTrafficSeen DateTime?
   expiresAt     DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -83,6 +84,7 @@ model DynamicAccessKey {
   validityPeriod        String?
   usageStartedAt        DateTime?
   dataUsage             BigInt    @default(0)
+  lastOnlineAt          DateTime?
   dataLimit             BigInt?
   expiresAt             DateTime?
   createdAt             DateTime  @default(now())

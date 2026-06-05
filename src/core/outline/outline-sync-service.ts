@@ -43,6 +43,13 @@ export class OutlineSyncService {
         if (remoteServerInfo) {
             this.logger.info("Getting server usage metrics...");
             const metrics = await this.client.metricsTransfer();
+            let serverMetrics: Outline.Experimental.Metrics | undefined;
+
+            try {
+                serverMetrics = await this.client.serverMetrics();
+            } catch (error) {
+                this.logger.warn(`Experimental server metrics are unavailable: ${error}`);
+            }
 
             const allMetrics = Object.values(metrics.bytesTransferredByUserId);
             const totalUsageMetrics = allMetrics.reduce(
@@ -72,7 +79,7 @@ export class OutlineSyncService {
 
             await this.pruneOldTrafficSnapshots();
 
-            await this.syncAccessKeys(metrics);
+            await this.syncAccessKeys(metrics, serverMetrics);
         }
     }
 
@@ -90,7 +97,10 @@ export class OutlineSyncService {
         });
     }
 
-    protected async syncAccessKeys(metrics: Outline.Metrics): Promise<void> {
+    protected async syncAccessKeys(
+        metrics: Outline.Metrics,
+        serverMetrics?: Outline.Experimental.Metrics
+    ): Promise<void> {
         this.logger.info("Loading servers access keys from local database...");
         const localAccessKeys = await prisma.accessKey.findMany({
             where: {
@@ -108,6 +118,10 @@ export class OutlineSyncService {
             );
 
             const dataLimit = this.bytesToMb(remoteAccessKey.dataLimitInBytes);
+            const lastTrafficSeenSeconds = serverMetrics?.accessKeys.find(
+                (accessKey) => String(accessKey.accessKeyId) === remoteAccessKey.id
+            )?.connection.lastTrafficSeen;
+            const lastTrafficSeen = lastTrafficSeenSeconds ? new Date(lastTrafficSeenSeconds * 1000) : undefined;
 
             if (localAccessKey) {
                 // this means we need to update the access key
@@ -124,7 +138,8 @@ export class OutlineSyncService {
                         name: accessKeyName,
                         dataLimit: dataLimit,
                         dataLimitUnit: DataLimitUnit.MB,
-                        dataUsage: metrics.bytesTransferredByUserId[remoteAccessKey.id]
+                        dataUsage: metrics.bytesTransferredByUserId[remoteAccessKey.id],
+                        lastTrafficSeen
                     }
                 });
 
@@ -148,7 +163,8 @@ export class OutlineSyncService {
                         accessUrl: remoteAccessKey.accessUrl,
                         method: remoteAccessKey.method,
                         password: remoteAccessKey.password,
-                        port: remoteAccessKey.port
+                        port: remoteAccessKey.port,
+                        lastTrafficSeen
                     }
                 });
             }
