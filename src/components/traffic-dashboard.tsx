@@ -1,6 +1,17 @@
 "use client";
 
-import { Button, ButtonGroup, Card, CardBody, CardHeader, Chip, Input, Skeleton } from "@heroui/react";
+import {
+    Button,
+    ButtonGroup,
+    Card,
+    CardBody,
+    CardHeader,
+    Chip,
+    Input,
+    Select,
+    SelectItem,
+    Skeleton
+} from "@heroui/react";
 import React, { useEffect, useMemo, useState } from "react";
 
 import {
@@ -200,6 +211,7 @@ export default function TrafficDashboard() {
     const [customStart, setCustomStart] = useState<string>(formatDateInput(new Date()));
     const [customEnd, setCustomEnd] = useState<string>(formatDateInput(new Date()));
     const [dataSource, setDataSource] = useState<TrafficDataSource>("vnstat");
+    const [tagId, setTagId] = useState<string>("");
     const [data, setData] = useState<TrafficDashboardData>();
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [hasMounted, setHasMounted] = useState<boolean>(false);
@@ -216,12 +228,12 @@ export default function TrafficDashboard() {
 
         const load = async () => {
             setIsLoading(true);
-            setData(await getTrafficDashboardData(range, dataSource));
+            setData(await getTrafficDashboardData(range, dataSource, dataSource === "dynamic-key" ? tagId : undefined));
             setIsLoading(false);
         };
 
         load();
-    }, [dataSource, hasMounted, range]);
+    }, [dataSource, hasMounted, range, tagId]);
 
     if (!hasMounted) {
         return (
@@ -275,6 +287,24 @@ export default function TrafficDashboard() {
                             流量使用排行
                         </Button>
                     </ButtonGroup>
+
+                    {dataSource === "dynamic-key" && (
+                        <Select
+                            aria-label="按标签筛选"
+                            className="w-[150px]"
+                            selectedKeys={[tagId || "all"]}
+                            size="sm"
+                            onSelectionChange={(keys) => {
+                                const selected = String(Array.from(keys)[0] ?? "all");
+
+                                setTagId(selected === "all" ? "" : selected);
+                            }}
+                        >
+                            {[{ id: "all", name: "全部标签" }, ...(data?.availableTags ?? [])].map((tag) => (
+                                <SelectItem key={tag.id}>{tag.name}</SelectItem>
+                            ))}
+                        </Select>
+                    )}
 
                     <ButtonGroup size="sm" variant="flat">
                         {presets.map((item) => (

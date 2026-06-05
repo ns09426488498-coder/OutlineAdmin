@@ -40,6 +40,7 @@ export interface TrafficDashboardData {
     totalServers: number;
     collectingServers: number;
     dataSource: TrafficDataSource;
+    availableTags: { id: string; name: string }[];
     ranking: ServerTrafficRankItem[];
     trend: TrafficTrendPoint[];
 }
@@ -132,7 +133,8 @@ const splitRangeIntoBuckets = (startDate: Date, endDate: Date, count: number): T
 
 export async function getTrafficDashboardData(
     range: TrafficRange,
-    dataSource: TrafficDataSource = "vnstat"
+    dataSource: TrafficDataSource = "vnstat",
+    tagId?: string
 ): Promise<TrafficDashboardData> {
     const startDate = new Date(range.startDate);
     const endDate = new Date(range.endDate);
@@ -153,6 +155,11 @@ export async function getTrafficDashboardData(
             })
         ]);
         const tagNames = new Map(tags.map((tag) => [String(tag.id), tag.name]));
+        const filteredDynamicAccessKeys = tagId
+            ? dynamicAccessKeys.filter((dak) =>
+                  getDynamicKeyTags(dak.serverPoolType, dak.serverPoolValue).includes(tagId)
+              )
+            : dynamicAccessKeys;
         const snapshotsByKey = new Map<number, typeof snapshots>();
 
         for (const snapshot of snapshots) {
@@ -172,7 +179,7 @@ export async function getTrafficDashboardData(
             return sumPositiveDiffs(baseline ? [baseline, ...inRange] : inRange, (snapshot) => snapshot.dataUsage);
         };
 
-        const ranking = dynamicAccessKeys.map((dak) => {
+        const ranking = filteredDynamicAccessKeys.map((dak) => {
             const usage = getUsageFromSnapshots(dak.id, startDate, endDate);
             const previousUsage = getUsageFromSnapshots(dak.id, previousRange.startDate, previousRange.endDate);
             const changePercent =
@@ -204,7 +211,7 @@ export async function getTrafficDashboardData(
         const buckets = splitRangeIntoBuckets(startDate, endDate, 7);
         const trend = buckets.map((bucket) => ({
             label: formatTrendLabel(bucket.endDate),
-            usage: dynamicAccessKeys.reduce(
+            usage: filteredDynamicAccessKeys.reduce(
                 (sum, dak) => sum + getUsageFromSnapshots(dak.id, bucket.startDate, bucket.endDate),
                 0
             )
@@ -219,6 +226,7 @@ export async function getTrafficDashboardData(
             totalServers: ranking.length,
             collectingServers: ranking.filter((item) => item.usage > 0).length,
             dataSource,
+            availableTags: tags.map((tag) => ({ id: String(tag.id), name: tag.name })),
             ranking,
             trend
         };
@@ -289,6 +297,7 @@ export async function getTrafficDashboardData(
         totalServers: servers.length,
         collectingServers: servers.filter((server) => server.vnstatLastCollectedAt && !server.vnstatLastError).length,
         dataSource,
+        availableTags: [],
         ranking,
         trend
     };
