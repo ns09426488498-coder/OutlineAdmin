@@ -26,7 +26,9 @@ type DynamicAccessKeyFilters = {
     tagId?: string | null;
 };
 
-const getDynamicAccessKeyTagIds = (dak: DynamicAccessKey): string[] => {
+type DynamicAccessKeyTagSource = Pick<DynamicAccessKey, "isSelfManaged" | "serverPoolType" | "serverPoolValue">;
+
+const getDynamicAccessKeyTagIds = (dak: DynamicAccessKeyTagSource): string[] => {
     if (!dak.isSelfManaged || dak.serverPoolType !== "tag" || !dak.serverPoolValue) return [];
 
     try {
@@ -36,7 +38,7 @@ const getDynamicAccessKeyTagIds = (dak: DynamicAccessKey): string[] => {
     }
 };
 
-const isDynamicAccessKeyInTag = (dak: DynamicAccessKey, tagId?: string | null): boolean => {
+const isDynamicAccessKeyInTag = (dak: DynamicAccessKeyTagSource, tagId?: string | null): boolean => {
     if (!tagId) return true;
 
     return getDynamicAccessKeyTagIds(dak).includes(String(tagId));
@@ -163,6 +165,32 @@ export async function getDynamicAccessKeysCount(filters?: { term?: string; tagId
             OR: term ? [{ name: { contains: term } }] : undefined
         }
     });
+}
+
+export async function getDynamicAccessKeysOnlineSummary(filters?: {
+    term?: string;
+    tagId?: string | null;
+}): Promise<{ online: number; total: number }> {
+    const { term, tagId } = filters || {};
+    const data = await prisma.dynamicAccessKey.findMany({
+        where: {
+            OR: term ? [{ name: { contains: term } }] : undefined
+        },
+        select: {
+            isSelfManaged: true,
+            serverPoolType: true,
+            serverPoolValue: true,
+            lastOnlineAt: true
+        }
+    });
+    const filteredData = data.filter((item) => isDynamicAccessKeyInTag(item, tagId));
+    const onlineThreshold = Date.now() - 5 * 60 * 1000;
+
+    return {
+        online: filteredData.filter((item) => item.lastOnlineAt && item.lastOnlineAt.getTime() >= onlineThreshold)
+            .length,
+        total: filteredData.length
+    };
 }
 
 export async function getDynamicAccessKeyById(

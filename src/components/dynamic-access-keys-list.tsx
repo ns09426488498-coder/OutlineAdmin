@@ -31,7 +31,7 @@ import {
 } from "@/src/core/definitions";
 import {
     getDynamicAccessKeys,
-    getDynamicAccessKeysCount,
+    getDynamicAccessKeysOnlineSummary,
     removeDynamicAccessKey,
     resetDynamicAccessKeyUsage
 } from "@/src/core/actions/dynamic-access-key";
@@ -82,6 +82,7 @@ export default function DynamicAccessKeysList() {
     const [currentDynamicAccessKey, setCurrentDynamicAccessKey] = useState<DynamicAccessKey>();
     const [page, setPage] = useState<number>(1);
     const [totalItems, setTotalItems] = useState<number>(1);
+    const [onlineItems, setOnlineItems] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [sortField, setSortField] = useState<DynamicAccessKeySortField>("id");
     const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -113,10 +114,13 @@ export default function DynamicAccessKeysList() {
             tagId: selectedTagId || undefined
         };
 
-        const filteredServers = await getDynamicAccessKeys(params, true);
-        const total = await getDynamicAccessKeysCount(params);
+        const [filteredServers, summary] = await Promise.all([
+            getDynamicAccessKeys(params, true),
+            getDynamicAccessKeysOnlineSummary(params)
+        ]);
 
-        setTotalItems(total);
+        setTotalItems(summary.total);
+        setOnlineItems(summary.online);
         setDynamicAccessKeys(filteredServers);
         setPage(1);
     };
@@ -156,13 +160,14 @@ export default function DynamicAccessKeysList() {
         setIsLoading(true);
 
         try {
-            const data = await getDynamicAccessKeys(params, true);
+            const [data, summary] = await Promise.all([
+                getDynamicAccessKeys(params, true),
+                getDynamicAccessKeysOnlineSummary(params)
+            ]);
 
             setDynamicAccessKeys(data);
-
-            const count = await getDynamicAccessKeysCount(params);
-
-            setTotalItems(count);
+            setTotalItems(summary.total);
+            setOnlineItems(summary.online);
         } finally {
             setIsLoading(false);
         }
@@ -234,26 +239,39 @@ export default function DynamicAccessKeysList() {
             />
 
             <div className="grid gap-4">
-                <div className="flex items-center gap-2">
-                    <div className="flex shrink-0 items-center gap-2">
-                        <h1 className="text-xl">{t("dynamicAccessKeys")}</h1>
+                <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+                    <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+                        <h1 className="whitespace-nowrap text-sm font-medium sm:text-xl">{t("dynamicAccessKeys")}</h1>
 
                         <Tooltip content={t("dynamicAccessKeysHelp")}>
                             <Link href={app.links.outlineVpn.dynamicAccessKeys} target="_blank">
-                                <InfoIcon size={20} />
+                                <InfoIcon className="size-4 sm:size-5" />
                             </Link>
                         </Tooltip>
                     </div>
 
-                    <form className="min-w-0 flex-1 sm:max-w-[230px]" onSubmit={searchForm.handleSubmit(handleSearch)}>
+                    <form
+                        className="min-w-[105px] flex-1 sm:max-w-[190px]"
+                        onSubmit={searchForm.handleSubmit(handleSearch)}
+                    >
                         <Input
                             className="w-full"
                             placeholder={t("nameSearchPlaceholder")}
+                            size="sm"
                             startContent={<>🔍</>}
                             variant="faded"
                             {...searchForm.register("term")}
                         />
                     </form>
+
+                    <Tooltip content={language === "zh" ? "当前在线人数 / 总人数" : "Currently online / Total"}>
+                        <div className="flex h-8 shrink-0 items-center gap-1 rounded-md bg-default-100 px-2 text-xs font-medium">
+                            <span className="size-2 rounded-full bg-success shadow-[0_0_5px_hsl(var(--heroui-success))]" />
+                            <span>
+                                {onlineItems}/{totalItems}
+                            </span>
+                        </div>
+                    </Tooltip>
                 </div>
 
                 <DynamicAccessKeysSslWarning />
