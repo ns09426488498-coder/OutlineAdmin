@@ -17,7 +17,15 @@ const main = async () => {
 
         const syncService = new OutlineSyncService(server);
 
-        await syncService.sync();
+        try {
+            await syncService.sync();
+        } catch (error) {
+            logger.error(`Server sync failed; continuing with remaining servers`, {
+                serverId: server.id,
+                serverName: server.name,
+                error
+            });
+        }
     }
 };
 
