@@ -77,7 +77,7 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
             : {
                   name: "",
                   path: "",
-                  loadBalancerAlgorithm: LoadBalancerAlgorithm.RandomKeyOnEachConnection,
+                  loadBalancerAlgorithm: LoadBalancerAlgorithm.UserIpAddress,
                   expiresAt: null,
                   prefix: null,
                   isSelfManaged: false,
@@ -92,7 +92,9 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
     const [errorMessage, setErrorMessage] = useState<string>();
 
     const [selectedExpirationDate, setSelectedExpirationDate] = useState<string>();
-    const [selectedLoadBalancer, setSelectedLoadBalancer] = useState<string | null>(null);
+    const [selectedLoadBalancer, setSelectedLoadBalancer] = useState<string | null>(
+        dynamicAccessKey?.loadBalancerAlgorithm ?? LoadBalancerAlgorithm.UserIpAddress
+    );
     const [selectedPrefix, setSelectedPrefix] = useState<string | null>(null);
 
     const actualSubmit = async (data: NewDynamicAccessKeyRequest | EditDynamicAccessKeyRequest) => {
@@ -110,7 +112,7 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
                 data.serverPoolValue = null;
             }
 
-            data.loadBalancerAlgorithm ??= LoadBalancerAlgorithm.RandomKeyOnEachConnection;
+            data.loadBalancerAlgorithm ??= LoadBalancerAlgorithm.UserIpAddress;
 
             if (!data.path) {
                 data.path = uuidv4();
@@ -155,7 +157,7 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
         if (selectedLoadBalancer) {
             form.setValue("loadBalancerAlgorithm", selectedLoadBalancer, { shouldDirty: true });
         } else {
-            form.setValue("loadBalancerAlgorithm", LoadBalancerAlgorithm.RandomKeyOnEachConnection, {
+            form.setValue("loadBalancerAlgorithm", LoadBalancerAlgorithm.UserIpAddress, {
                 shouldDirty: true
             });
         }
@@ -177,7 +179,7 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
             setSelectedPrefix(dynamicAccessKey.prefix);
         } else {
             setSelectedExpirationDate(undefined);
-            setSelectedLoadBalancer(null);
+            setSelectedLoadBalancer(LoadBalancerAlgorithm.UserIpAddress);
             setSelectedPrefix(null);
         }
     }, [dynamicAccessKey]);
@@ -314,7 +316,7 @@ export default function DynamicAccessKeyForm({ dynamicAccessKey, tags, servers }
                             </Button>
                         </DropdownTrigger>
                         <DropdownMenu
-                            defaultSelectedKeys={selectedLoadBalancer ? new Set([selectedLoadBalancer]) : undefined}
+                            selectedKeys={selectedLoadBalancer ? new Set([selectedLoadBalancer]) : new Set()}
                             selectionMode="single"
                             variant="flat"
                             onSelectionChange={(v) => setSelectedLoadBalancer(v.currentKey!)}

@@ -11,6 +11,7 @@ import {
     DynamicAccessKeyWithAccessKeysCountAndPoolTags,
     DynamicAccessKeyWithAccessKeysCount,
     EditDynamicAccessKeyRequest,
+    LoadBalancerAlgorithm,
     NewDynamicAccessKeyRequest,
     SortDirection
 } from "@/src/core/definitions";
@@ -272,7 +273,7 @@ export async function createDynamicAccessKey(data: NewDynamicAccessKeyRequest): 
         data: {
             name: data.name,
             path: data.path,
-            loadBalancerAlgorithm: data.loadBalancerAlgorithm,
+            loadBalancerAlgorithm: data.loadBalancerAlgorithm || LoadBalancerAlgorithm.UserIpAddress,
             prefix: data.prefix,
             expiresAt: data.expiresAt,
             isSelfManaged: data.isSelfManaged,
@@ -293,7 +294,7 @@ export async function updateDynamicAccessKey(data: EditDynamicAccessKeyRequest):
         data: {
             name: data.name,
             path: data.path,
-            loadBalancerAlgorithm: data.loadBalancerAlgorithm,
+            loadBalancerAlgorithm: data.loadBalancerAlgorithm || LoadBalancerAlgorithm.UserIpAddress,
             prefix: data.prefix,
             expiresAt: data.expiresAt,
             isSelfManaged: data.isSelfManaged,
