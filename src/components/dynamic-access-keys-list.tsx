@@ -313,6 +313,10 @@ export default function DynamicAccessKeysList() {
                             </DropdownTrigger>
                             <DropdownMenu
                                 aria-label={language === "zh" ? "按标签筛选" : "Filter by tag"}
+                                classNames={{
+                                    base: "max-h-[min(70vh,420px)] overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]",
+                                    list: "touch-pan-y"
+                                }}
                                 items={tagFilterItems}
                                 selectedKeys={new Set([selectedTagId || "all"])}
                                 selectionMode="single"
